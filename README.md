@@ -8,3 +8,5 @@ minor changes in between, such as adding new keywords. I suggest that the langua
 used for the first compiler be NanoMorpho, as described in markmid.pdf. You will
 also want to define the format of comments in your language.
 
+Málrit fyrir NanoMorpho er i kafla 10.3 markmid.pdf
+
