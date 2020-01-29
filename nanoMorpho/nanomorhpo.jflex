@@ -55,17 +55,27 @@ Semantic values are expected in a field yylval of type parserval where parser is
     final static int NAME = 1008;
     final static int OPTNAME = 1009;
 
-    //Variables that will contain lexemes as they are recognized.
-    private final static String lexeme;
+    /*
+        Variables that will contain tokens and lexemes as they are recognized.
+        We will need to store the current token, lexeme and also the next token and lexeme
+        due to some ambiguity that would appear if we would only track on token and lexeme at a time. 
+    */
+    private static int currentToken;
+    private static int nextToken;
+    private static String currentLexeme;
+    private static String nextLexeme;
+
+    private static NanoMorpho lexer;
 
     public static void main( String[] args ) throws Exception
     {
-        NanoLexer lexer = new NanoLexer(new FileReader(args[0]));
-        int token = lexer.yylex();
+        lexer = new NanoMorpho(new FileReader(args[0]));
+
+        int token = advance();
         while(token != ENDOFFILE)
         {
-            System.out.println(""+token+": \'"+lexeme+"\'");
-            token = lexer.yylex();
+            System.out.println(""+token+": \'"+currentLexeme+"\'");
+            token =  advance();
         }
     }
     /*
@@ -73,7 +83,20 @@ Semantic values are expected in a field yylval of type parserval where parser is
         * Need to implement getToken() (does not advance the token) t= lexer.getToken()
         * Need to implement getNextToken (does not advance but gets next token) t = lexer.getNextToken()
         * Need to implment getlexeme t = lexer.getLexeme() 
+
+        þarf 4 breytur
+
+        p int t1,t2
+        p string l1,l2
     */
+
+    private static int advance() throws Exception
+    {
+        return lexer.yylex();
+    }
+
+ 
+    
 %}
 
 /* 
@@ -86,8 +109,8 @@ _INT={_DIGIT}+
 _STRING=\"([^\"\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|\\[0-7][0-7]|\\[0-7])*\"
 _CHAR=\'([^\'\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|(\\[0-7][0-7])|(\\[0-7]))\'
 _DELIM=[(){},;=]
-_NAME=([:letter:]|[\+\-*/!%=><\:\^\~&|?]|{_DIGIT})+
-_OPNAME=[<>+-*/^:]
+_NAME=([:letter:]|\_|{_DIGIT})+
+_OPNAME=[<>+\-*\/\^:]
 %%
 
 /* 
@@ -105,55 +128,55 @@ _OPNAME=[<>+-*/^:]
 */
 
 {_DELIM} {
-	lexeme = yytext();
+	currentLexeme = yytext();
 	return yycharat(0);
 }
 
 {_STRING} | {_FLOAT} | {_CHAR} | {_INT} | null | true | false {
-	lexeme = yytext();
+	currentLexeme = yytext();
 	return LITERAL;
 }
 
 "if" {
-	lexeme = yytext();
+	currentLexeme = yytext();
 	return IF;
 }
 
 "elsif" {
-	lexeme = yytext();
+	currentLexeme = yytext();
 	return ELSIF;
 }
 
 "else" {
-	lexeme = yytext();
+	currentLexeme = yytext();
 	return ELSE;
 }
 
 "while" {
-	lexeme = yytext();
+	currentLexeme = yytext();
 	return WHILE;
 }
 
 "return" {
-	lexeme = yytext();
+	currentLexeme = yytext();
 	return RETURN;
 }
 
 "var" {
-	lexeme = yytext();
+	currentLexeme = yytext();
 	return VAR;
 }
 
-
 {_NAME} {
-	lexeme = yytext();
+	currentLexeme = yytext();
 	return NAME;
 }
 
 {_OPNAME} {
-	lexeme = yytext();
+	currentLexeme = yytext();
 	return OPTNAME;
 }
+
 // # are our comments if # is the found character then we do nothing since it's a comment.
 "#".*$ {
 }
@@ -167,6 +190,6 @@ _OPNAME=[<>+-*/^:]
   we have no idea what this is so we return an ERROR.
 */
 . {
-    lexeme = yytext();
+    currentLexeme = yytext();
 	return ERROR;
 }
