@@ -57,8 +57,8 @@ Semantic values are expected in a field yylval of type parserval where parser is
 
     /*
         Variables that will contain tokens and lexemes as they are recognized.
-        We will need to store the current token, lexeme and also the next token and lexeme
-        due to some ambiguity that would appear if we would only track on token and lexeme at a time. 
+        We will need to store the current token and lexeme, also the next token and lexeme
+        due to some ambiguity that would appear if we would only track one token and lexeme at a time. 
     */
     private static int currentToken;
     private static int nextToken;
@@ -69,34 +69,69 @@ Semantic values are expected in a field yylval of type parserval where parser is
 
     public static void main( String[] args ) throws Exception
     {
-        lexer = new NanoMorpho(new FileReader(args[0]));
-
-        int token = advance();
-        while(token != ENDOFFILE)
+        init(args[0]);
+        while( getToken() != 0 )
         {
-            System.out.println(""+token+": \'"+currentLexeme+"\'");
-            token =  advance();
+            System.out.println(""+getToken()+": \'"+getLexeme()+"\'");
+            advance();
         }
     }
+
     /*
-        * Need to implement advance to check for next token t = lexer.advance()
-        * Need to implement getToken() (does not advance the token) t= lexer.getToken()
-        * Need to implement getNextToken (does not advance but gets next token) t = lexer.getNextToken()
-        * Need to implment getlexeme t = lexer.getLexeme() 
-
-        þarf 4 breytur
-
-        p int t1,t2
-        p string l1,l2
+        Usage : init(filePath)
+          For : filePath is a 'String' that contains a path to a file
+        After : initializes the NanoMorpho class and passes it the file that was obtained 
+                through the filePath, then fetches the first token and calls the advance function
+       Throws : can throw an Exception not sure which one, since we specified that we are using byaccj
+                JFlex implements the functions that byaccj has such as yylex() which could throw Exceptions  
     */
-
-    private static int advance() throws Exception
+    private static void init(String filePath) throws Exception
     {
-        return lexer.yylex();
+        lexer = new NanoMorpho(new FileReader(filePath));
+        nextToken = lexer.yylex();
+        advance();
     }
 
- 
-    
+    /*
+        Usage : advance()
+          For : nothing
+        After : sets the currentToken value and fetches the next token only
+                if we have not reached end of file
+    */
+    private static int advance() throws Exception
+    {
+        currentToken = nextToken;
+
+        if(currentToken != ENDOFFILE)
+        {
+            nextToken = lexer.yylex();
+        }
+
+        return currentToken;
+    }
+
+    //--------------------------- GETTERS : START ----------------------------------
+    private static int getToken() 
+    {
+        return currentToken;
+    }
+
+    private static int getNextToken()
+    {
+        return nextToken;
+    }
+
+    private static String getLexeme()
+    {
+        return currentLexeme;
+    }
+
+    private static String getNextLexeme()
+    {
+        return nextLexeme;
+    }
+
+    //--------------------------- GETTERS : END ----------------------------------
 %}
 
 /* 
@@ -128,52 +163,62 @@ _OPNAME=[<>+\-*\/\^:]
 */
 
 {_DELIM} {
-	currentLexeme = yytext();
+    currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return yycharat(0);
 }
 
 {_STRING} | {_FLOAT} | {_CHAR} | {_INT} | null | true | false {
-	currentLexeme = yytext();
+	currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return LITERAL;
 }
 
 "if" {
-	currentLexeme = yytext();
+	currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return IF;
 }
 
 "elsif" {
-	currentLexeme = yytext();
+	currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return ELSIF;
 }
 
 "else" {
-	currentLexeme = yytext();
+	currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return ELSE;
 }
 
 "while" {
-	currentLexeme = yytext();
+	currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return WHILE;
 }
 
 "return" {
-	currentLexeme = yytext();
+	currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return RETURN;
 }
 
 "var" {
-	currentLexeme = yytext();
+	currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return VAR;
 }
 
 {_NAME} {
-	currentLexeme = yytext();
+	currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return NAME;
 }
 
 {_OPNAME} {
-	currentLexeme = yytext();
+	currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return OPTNAME;
 }
 
@@ -190,6 +235,7 @@ _OPNAME=[<>+\-*\/\^:]
   we have no idea what this is so we return an ERROR.
 */
 . {
-    currentLexeme = yytext();
+    currentLexeme = nextLexeme;
+	nextLexeme = yytext();
 	return ERROR;
 }
