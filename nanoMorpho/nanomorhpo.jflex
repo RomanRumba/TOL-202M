@@ -253,7 +253,7 @@ _OPNAME=[<>%+\-*\/\^:$|!=\~]+
 }
 
 // # are our comments if # is the found character then we do nothing since it's a comment.
-"#".*$ {
+";;;".*$ {
 }
 
 // If its a space, tab, carrige return, line or form feed we do nothing 
