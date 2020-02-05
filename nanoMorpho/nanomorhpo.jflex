@@ -9,7 +9,7 @@
     They can also be used for many other purposes.
 
    About This Project.
-    For this project we will use JFlex to create a scanner for the language NanoMorpho.
+   For this project we will use JFlex to create a scanner for the language NanoMorpho.
 */
 
 import java.io.*;
@@ -43,7 +43,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
         Note : token values should be high so they do not conflict with ASCII values
     */
     final static int ERROR = -1;
-    // By default 0 is end of file but i want to have it as a constant
+    // By default 0 is end of file but we want to have it as a constant
     final static int ENDOFFILE = 0;
     final static int VAR = 1001;
     final static int LITERAL = 1002;
@@ -55,6 +55,8 @@ Semantic values are expected in a field yylval of type parserval where parser is
     final static int NAME = 1008;
     final static int AND = 1010;
     final static int OR = 1011;
+    
+    //Different operations have different priorities, so we have 7 groups of priorities.
     final static int OPTNAME1 = 1012;
     final static int OPTNAME2 = 1013;
     final static int OPTNAME3 = 1014;
@@ -103,7 +105,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
     /*
         Usage : advance()
           For : nothing
-        After : sets the currentToken value and fetches the next token only
+        After : sets the current token and lexeme values and fetches the next token only
                 if we have not reached end of file
     */
     private static int advance() throws Exception
@@ -252,7 +254,12 @@ _OPNAME=[<>%+\-*\/\^:$|!=\~]+
     }
 }
 
-// # are our comments if # is the found character then we do nothing since it's a comment.
+/*
+  The reason to why comments, spaces,tabs and carrige returns do not return a lexeme is because, 
+  we do not care about it, this type of information should have no impact on the code.
+*/
+
+// ;;; are our comments, if the line starts with ;;; and is followed by zero or more characters its a comment.
 ";;;".*$ {
 }
 
