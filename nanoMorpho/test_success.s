@@ -6,8 +6,15 @@ main(x,y) {
     big_abc = 222;
     palli = "roman";
 
-    if(true){
+    if(true && false){
         big_abc = 222 * 2;
     }
-
+	
+	if(1 > 2){
+        big_abc = 222;
+    }
+	
+	if(2 == 2){
+	}
+	
 }

@@ -53,7 +53,15 @@ Semantic values are expected in a field yylval of type parserval where parser is
     final static int WHILE = 1006;
     final static int RETURN = 1007;
     final static int NAME = 1008;
-    final static int OPTNAME = 1009;
+    final static int AND = 1010;
+    final static int OR = 1011;
+    final static int OPTNAME1 = 1012;
+    final static int OPTNAME2 = 1013;
+    final static int OPTNAME3 = 1014;
+    final static int OPTNAME4 = 1015;
+    final static int OPTNAME5 = 1016;
+    final static int OPTNAME6 = 1017;
+    final static int OPTNAME7 = 1018;
 
     /*
         Variables that will contain tokens and lexemes as they are recognized.
@@ -70,7 +78,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
     public static void main( String[] args ) throws Exception
     {
         init(args[0]);
-        while( getToken() != 0 )
+        while( getToken() != ENDOFFILE )
         {
             System.out.println(""+getToken()+": \'"+getLexeme()+"\'");
             advance();
@@ -101,7 +109,8 @@ Semantic values are expected in a field yylval of type parserval where parser is
     private static int advance() throws Exception
     {
         currentToken = nextToken;
-
+        currentLexeme = nextLexeme;
+	
         if(currentToken != ENDOFFILE)
         {
             nextToken = lexer.yylex();
@@ -145,7 +154,8 @@ _STRING=\"([^\"\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|\\[0-7
 _CHAR=\'([^\'\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|(\\[0-7][0-7])|(\\[0-7]))\'
 _DELIM=[(){},;=]
 _NAME=([:letter:]|\_|{_DIGIT})+
-_OPNAME=[<>+\-*\/\^:]
+_OPNAME=[<>%+\-*\/\^:$|!=\~]+
+
 %%
 
 /* 
@@ -163,63 +173,83 @@ _OPNAME=[<>+\-*\/\^:]
 */
 
 {_DELIM} {
-    currentLexeme = nextLexeme;
-	nextLexeme = yytext();
+    nextLexeme = yytext();
 	return yycharat(0);
 }
 
 {_STRING} | {_FLOAT} | {_CHAR} | {_INT} | null | true | false {
-	currentLexeme = nextLexeme;
-	nextLexeme = yytext();
+    nextLexeme = yytext();
 	return LITERAL;
 }
 
 "if" {
-	currentLexeme = nextLexeme;
-	nextLexeme = yytext();
+    nextLexeme = yytext();
 	return IF;
 }
 
 "elsif" {
-	currentLexeme = nextLexeme;
-	nextLexeme = yytext();
+    nextLexeme = yytext();
 	return ELSIF;
 }
 
 "else" {
-	currentLexeme = nextLexeme;
-	nextLexeme = yytext();
+    nextLexeme = yytext();
 	return ELSE;
 }
 
 "while" {
-	currentLexeme = nextLexeme;
-	nextLexeme = yytext();
+    nextLexeme = yytext();
 	return WHILE;
 }
 
 "return" {
-	currentLexeme = nextLexeme;
-	nextLexeme = yytext();
+    nextLexeme = yytext();
 	return RETURN;
 }
 
 "var" {
-	currentLexeme = nextLexeme;
-	nextLexeme = yytext();
+    nextLexeme = yytext();
 	return VAR;
 }
 
+"&&" {
+    nextLexeme = yytext();
+	return AND;
+}
+
+"||" {
+    nextLexeme = yytext();
+	return OR;
+}
+
 {_NAME} {
-	currentLexeme = nextLexeme;
-	nextLexeme = yytext();
+    nextLexeme = yytext();
 	return NAME;
 }
 
 {_OPNAME} {
-	currentLexeme = nextLexeme;
-	nextLexeme = yytext();
-	return OPTNAME;
+    nextLexeme = yytext();
+    if(nextLexeme.charAt(0) == '*' || nextLexeme.charAt(0) == '/' || nextLexeme.charAt(0) == '%'){
+        return OPTNAME7;
+    }
+    else if(nextLexeme.charAt(0) == '+' || nextLexeme.charAt(0) == '-' ){
+        return OPTNAME6;
+    }
+    else if(nextLexeme.charAt(0) == '>' || nextLexeme.charAt(0) == '<' || nextLexeme.charAt(0) == '!' || nextLexeme.charAt(0) == '=' ){
+        return OPTNAME5;
+    }
+    else if(nextLexeme.charAt(0) == '&' ){
+        return OPTNAME4;
+    }
+    else if(nextLexeme.charAt(0) == '|'){
+        return OPTNAME3;
+    }
+    else if(nextLexeme.charAt(0) == ':'){
+        return OPTNAME2;
+    }
+    else if(nextLexeme.charAt(0) == '?' || nextLexeme.charAt(0) == '^' || nextLexeme.charAt(0) == '~'){
+        return OPTNAME1;
+    }
 }
 
 // # are our comments if # is the found character then we do nothing since it's a comment.
@@ -235,7 +265,6 @@ _OPNAME=[<>+\-*\/\^:]
   we have no idea what this is so we return an ERROR.
 */
 . {
-    currentLexeme = nextLexeme;
-	nextLexeme = yytext();
+    nextLexeme = yytext();
 	return ERROR;
 }
