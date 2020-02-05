@@ -439,7 +439,6 @@ final static int OPNAME = 1007;
 final static int WHILE = 1008;
 final static int ELSIF = 1009;
 final static int ELSE = 1010;
-final static int var = 1011;
 
 // A variable that will contain lexemes as they are recognized:
 private static String lexeme;
@@ -836,7 +835,7 @@ public static void main( String[] args ) throws Exception
           case 22: break;
           case 9: 
             { lexeme = yytext();
-    return VAR;
+    return var;
             } 
             // fall through
           case 23: break;

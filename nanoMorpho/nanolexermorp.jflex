@@ -36,6 +36,7 @@ final static int OPNAME = 1007;
 final static int WHILE = 1008;
 final static int ELSIF = 1009;
 final static int ELSE = 1010;
+final static int COMMENT = 1011;
 
 // A variable that will contain lexemes as they are recognized:
 private static String lexeme;
@@ -122,7 +123,9 @@ _OPNAME=([\+\-*/!%=><\:\^\~&|?])+
 	return NAME;
 }
 
-";".*$ {
+";;;" {
+    lexeme = yytext();
+    return COMMENT;
 }
 
 [ \t\r\n\f] {
