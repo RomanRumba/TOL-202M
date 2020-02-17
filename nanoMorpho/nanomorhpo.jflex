@@ -32,6 +32,10 @@ BYacc/J expects a function int yylex() in the parser class that returns each nex
 Semantic values are expected in a field yylval of type parserval where parser is the name of the generated parser class.
 */
 %byaccj 
+// Switches line counting on (the current line number can be accessed via the variable yyline)
+%line
+// Switches column counting on (the current column is accessed via yycolumn)
+%column 
 
 /* 
    Everything inside %{ %} will be inserted in the generated class, here you can
@@ -66,7 +70,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
     final static int OPTNAME7 = 1018;
 
     /*
-        Variables that will contain tokens and lexemes as they are recognized.
+        Variables that will contain tokens, lexemes and their position in the text (line, column) as they are recognized.
         We will need to store the current token and lexeme, also the next token and lexeme
         due to some ambiguity that would appear if we would only track one token and lexeme at a time. 
     */
@@ -74,74 +78,107 @@ Semantic values are expected in a field yylval of type parserval where parser is
     private static int nextToken;
     private static String currentLexeme;
     private static String nextLexeme;
+    private static int currentLine;
+    private static int nextLine;
+    private static int currentColumn;
+    private static int nextColumn;
 
     private static NanoMorpho lexer;
 
     public static void main( String[] args ) throws Exception
     {
-        init(args[0]);
-        while( getToken() != ENDOFFILE )
+        lexer = new NanoMorpho(new FileReader(args[0]));
+        lexer.init();
+
+        while(lexer.getToken() != ENDOFFILE )
         {
-            System.out.println(""+getToken()+": \'"+getLexeme()+"\'");
-            advance();
+            System.out.println("(line,column): ("+(lexer.getLine() + 1) +","+(lexer.getColumn()+ 1) +") | "+lexer.getToken()+": \'"+lexer.getLexeme()+"\'");
+            lexer.advance();
         }
     }
 
+    
+
     /*
-        Usage : init(filePath)
-          For : filePath is a 'String' that contains a path to a file
-        After : initializes the NanoMorpho class and passes it the file that was obtained 
-                through the filePath, then fetches the first token and calls the advance function
+        Usage : init()
+          For : nothing
+        After : fetches the first token,lexeme, line and column and calls the advance function
        Throws : can throw an Exception not sure which one, since we specified that we are using byaccj
                 JFlex implements the functions that byaccj has such as yylex() which could throw Exceptions  
     */
-    private static void init(String filePath) throws Exception
+    private void init() throws Exception
     {
-        lexer = new NanoMorpho(new FileReader(filePath));
         nextToken = lexer.yylex();
-        advance();
+        nextLexeme = yytext();
+        nextLine = yyline;
+        nextColumn = yycolumn;
+        lexer.advance();
     }
 
     /*
         Usage : advance()
           For : nothing
-        After : sets the current token and lexeme values and fetches the next token only
+        After : sets the current token, lexeme, line and column values and fetches the next token only
                 if we have not reached end of file
     */
-    private static int advance() throws Exception
+    private int advance() throws Exception
     {
         currentToken = nextToken;
         currentLexeme = nextLexeme;
+        currentLine = nextLine;
+        currentColumn = nextColumn;
 	
         if(currentToken != ENDOFFILE)
         {
             nextToken = lexer.yylex();
+            nextLexeme = yytext();
+            nextLine = yyline;
+            nextColumn = yycolumn;
         }
 
         return currentToken;
     }
 
     //--------------------------- GETTERS : START ----------------------------------
-    private static int getToken() 
+    private int getToken() 
     {
         return currentToken;
     }
 
-    private static int getNextToken()
+    private int getNextToken()
     {
         return nextToken;
     }
 
-    private static String getLexeme()
+    private String getLexeme()
     {
         return currentLexeme;
     }
 
-    private static String getNextLexeme()
+    private String getNextLexeme()
     {
         return nextLexeme;
     }
 
+    private int getLine()
+    {
+        return currentLine;
+    }
+
+    private int getNextLine()
+    {
+        return nextLine;
+    }
+
+    private int getColumn()
+    {
+        return currentColumn;
+    }
+
+    private int getNextColumn()
+    {
+        return nextColumn;
+    }
     //--------------------------- GETTERS : END ----------------------------------
 %}
 
@@ -175,62 +212,50 @@ _OPNAME=[<>%+\-*\/\^:$|!=\~]+
 */
 
 {_DELIM} {
-    nextLexeme = yytext();
 	return yycharat(0);
 }
 
 {_STRING} | {_FLOAT} | {_CHAR} | {_INT} | null | true | false {
-    nextLexeme = yytext();
 	return LITERAL;
 }
 
 "if" {
-    nextLexeme = yytext();
 	return IF;
 }
 
 "elsif" {
-    nextLexeme = yytext();
 	return ELSIF;
 }
 
 "else" {
-    nextLexeme = yytext();
 	return ELSE;
 }
 
 "while" {
-    nextLexeme = yytext();
 	return WHILE;
 }
 
 "return" {
-    nextLexeme = yytext();
 	return RETURN;
 }
 
 "var" {
-    nextLexeme = yytext();
 	return VAR;
 }
 
 "&&" {
-    nextLexeme = yytext();
 	return AND;
 }
 
 "||" {
-    nextLexeme = yytext();
 	return OR;
 }
 
 {_NAME} {
-    nextLexeme = yytext();
 	return NAME;
 }
 
 {_OPNAME} {
-    nextLexeme = yytext();
     if(nextLexeme.charAt(0) == '*' || nextLexeme.charAt(0) == '/' || nextLexeme.charAt(0) == '%'){
         return OPTNAME7;
     }
@@ -272,6 +297,5 @@ _OPNAME=[<>%+\-*\/\^:$|!=\~]+
   we have no idea what this is so we return an ERROR.
 */
 . {
-    nextLexeme = yytext();
 	return ERROR;
 }
