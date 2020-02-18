@@ -89,15 +89,17 @@ Semantic values are expected in a field yylval of type parserval where parser is
     {
         lexer = new NanoMorpho(new FileReader(args[0]));
         lexer.init();
-
+        lexer.beginParse();
+       
+      /*
+        // For debuggin purposes 
         while(lexer.getToken() != ENDOFFILE )
         {
             System.out.println("(line,column): ("+(lexer.getLine() + 1) +","+(lexer.getColumn()+ 1) +") | "+lexer.getToken()+": \'"+lexer.getLexeme()+"\'");
             lexer.advance();
         }
+      */
     }
-
-    
 
     /*
         Usage : init()
@@ -180,6 +182,353 @@ Semantic values are expected in a field yylval of type parserval where parser is
         return nextColumn;
     }
     //--------------------------- GETTERS : END ----------------------------------
+
+    //--------------------------- PARSER : START ---------------------------------
+    private void beginParse() throws Exception
+    {
+        while(lexer.getToken() != lexer.ENDOFFILE)
+        {
+            lexer.functionDescrition();
+        }
+    }
+    
+    private void functionDescrition() throws Exception
+    {
+        /* Function descrition : 
+            - starts with NAME 
+            - followed by '(' 
+            - then with 0 or more NAME's that are seperated by ',' 
+            - ending with ')'
+            - then followed by the function BODY
+        */
+        
+        lexer.checkIfCurrentTokenIsName("name of function");
+
+        lexer.checkIfCurrentLexemeIsSingleChar("(");
+
+        if(lexer.getToken() == lexer.NAME)
+        {
+            while(lexer.checkIfCurrentTokenIsName(null))
+            {
+                if(lexer.getLexeme().equals(","))
+                {
+                    lexer.advance();
+                }
+                else if(lexer.getLexeme().equals(")"))
+                {
+                    break;
+                }
+                else 
+                {
+                    lexer.throwParserException(" ',' or ')' ");
+                }
+            }
+        }
+
+        lexer.checkIfCurrentLexemeIsSingleChar(")");
+
+        functionBody();
+    }
+
+    private void functionBody() throws Exception
+    {
+        /*
+         * Function body definition : 
+         *   - starts with '{'
+         *   - followed by 0 or more declarations
+         *   - followed by 1 or more expressions
+         *   - ending with '}'
+         */
+        lexer.checkIfCurrentLexemeIsSingleChar("{");
+
+        // A declaration starts with the keyword var and is followed by 1 or more Name's 
+        if(lexer.getToken() == lexer.VAR)
+        {
+            lexer.advance();
+
+            while(lexer.checkIfCurrentTokenIsName(null))
+            {
+                if(lexer.getLexeme().equals(","))
+                {
+                    lexer.advance();
+                }
+                else if(lexer.getLexeme().equals(";"))
+                {
+                    lexer.advance();
+                    break;
+                }
+                else 
+                {
+                    lexer.throwParserException(" ',' or ';' ");
+                }
+            }
+        }
+
+        lexer.checkForExpressionLoop();
+
+        lexer.checkIfCurrentLexemeIsSingleChar("}");
+    }
+    
+    private void expressionDefinition() throws Exception
+    {
+        /*
+         * Expression can be one of these things : 
+         *   - can start with Name that can be followed up by 3 different scenarios
+                1. NAME followed by nothing
+                2. NAME followed by '=' then by another expression
+                3. NAME followed by '(' then by 1 or more comma seperated expressions and ending with ')'
+             - can start with keyword return followed by an expressions
+             - can start with Opname followed by an expression
+             - can start with expression followed by an opname then followed by another expression
+             - can be only a litteral
+             - can start with '(' followed by an expression then ending with ')'
+             - can start with the keyword IF followed by
+                * '('
+                * then followed by an expression
+                * then by ')'
+                * then followed by a body then by optional Elsif or else 
+             - cant start with keyword while 
+                * followed by '('
+                * then by an expression
+                * then followed by ')'
+                * then by followed by body
+         */
+       
+        if(lexer.getNextToken() == lexer.OPTNAME1 || lexer.getNextToken() == lexer.OPTNAME2 || lexer.getNextToken() == lexer.OPTNAME3 ||
+           lexer.getNextToken() == lexer.OPTNAME4 || lexer.getNextToken() == lexer.OPTNAME5 || lexer.getNextToken() == lexer.OPTNAME6 || lexer.getNextToken() == lexer.OPTNAME7)
+        {
+           /*
+              This is something that we have decided, if we next token is an OPERATION
+              then we allow only Names,Litterals, ')' or other OPNAMES 
+           */
+           if(lexer.getToken() == lexer.NAME){
+                lexer.advance();    
+           }
+           else if(lexer.getToken() == lexer.LITERAL)
+           {
+               lexer.advance();
+           }
+           else if(lexer.getLexeme().equals(")"))
+           {
+               lexer.advance();
+           }
+           else if(lexer.getToken() == lexer.OPTNAME1 || lexer.getToken() == lexer.OPTNAME2 || lexer.getToken() == lexer.OPTNAME3 ||
+                   lexer.getToken() == lexer.OPTNAME4 || lexer.getToken() == lexer.OPTNAME5 || lexer.getToken() == lexer.OPTNAME6 || lexer.getToken() == lexer.OPTNAME7)
+           {
+               lexer.advance();
+           }
+           else 
+           {
+               lexer.throwParserException("variable name, litteral, ')' or an operation");
+           }
+           /*
+             if we have made it to this point it means we are currently on the
+             OPNAME token that was the result of this condition being met so 
+             no need to check it its an OPNAME since we already know it is
+             but we still Advance for the OPNAME
+            */
+           lexer.advance();
+           /*
+             if we call expressionDefinition at this point this allows us to create
+             infite amount of "expr OPNAME expr" 
+           */
+           expressionDefinition(); 
+        }
+        else if(lexer.getToken() == lexer.NAME)
+        {
+           lexer.advance();
+
+           if(lexer.getLexeme().equals("="))
+           {
+               lexer.advance();
+               expressionDefinition();
+           }
+           else if(lexer.getLexeme().equals("("))
+           {
+               lexer.advance();
+               while(true)
+               {
+                   expressionDefinition();
+                   if(lexer.getLexeme().equals(","))
+                   {
+                       lexer.advance();
+                   }
+                   else if(lexer.getLexeme().equals(")"))
+                   {
+                     break;
+                   }
+               }
+               lexer.checkIfCurrentLexemeIsSingleChar(")"); 
+           }
+           
+        }
+        else if(lexer.getToken() == lexer.RETURN)
+        {
+            lexer.advance();
+            expressionDefinition();
+        }
+        else if(lexer.getToken() == lexer.OPTNAME1 || lexer.getToken() == lexer.OPTNAME2 || lexer.getToken() == lexer.OPTNAME3 ||
+                lexer.getToken() == lexer.OPTNAME4 || lexer.getToken() == lexer.OPTNAME5 || lexer.getToken() == lexer.OPTNAME6 || lexer.getToken() == lexer.OPTNAME7)
+        {
+            lexer.advance();
+            expressionDefinition();
+        }
+        else if(lexer.getToken() == lexer.LITERAL) 
+        {
+            lexer.advance();
+        }
+        else if(lexer.getLexeme().equals("("))
+        {
+            lexer.advance();
+            expressionDefinition();
+            lexer.checkIfCurrentLexemeIsSingleChar(")"); 
+
+            /*
+                like Snorri says needs some chewing gum and ducktape, i forgot to 
+                think of what happens when you encounter (expr) OPNAME or (expr) OPNAME (expr)  
+            */
+            if(lexer.getToken() == lexer.OPTNAME1 || lexer.getToken() == lexer.OPTNAME2 || lexer.getToken() == lexer.OPTNAME3 ||
+               lexer.getToken() == lexer.OPTNAME4 || lexer.getToken() == lexer.OPTNAME5 || lexer.getToken() == lexer.OPTNAME6 || lexer.getToken() == lexer.OPTNAME7)
+            {
+                expressionDefinition();
+            }
+        }
+        else if(lexer.getToken() == lexer.IF)
+        {
+            checkIfDefinitionAfterWhileOrIfHolds();
+            while(lexer.getToken() == lexer.ELSIF)
+            {
+              checkIfDefinitionAfterWhileOrIfHolds();
+            }
+          
+            if(lexer.getToken() == lexer.ELSE)
+            {
+                lexer.advance();
+                bodyDefinition();
+            }
+        }
+        else if(lexer.getToken() == lexer.WHILE)
+        {
+            checkIfDefinitionAfterWhileOrIfHolds();
+        }
+        else 
+        {
+            lexer.throwParserException("an expression");
+        }
+    }
+
+    public void bodyDefinition() throws Exception
+    {
+        /*
+         * Body definition :
+         *   - starts with '{'
+         *   - followed by 1 or more expressions
+         *   - ending with '}'
+        */
+        lexer.checkIfCurrentLexemeIsSingleChar("{");
+        lexer.checkForExpressionLoop();
+        lexer.checkIfCurrentLexemeIsSingleChar("}"); 
+    }
+
+    /*
+     * this sequence of functions appears 3 times i just figured
+     * it would look cleaner if i extract it to a method of its own.
+     */
+    private void checkIfDefinitionAfterWhileOrIfHolds() throws Exception
+    {
+        lexer.advance();
+        lexer.checkIfCurrentLexemeIsSingleChar("(");
+        expressionDefinition(); 
+        lexer.checkIfCurrentLexemeIsSingleChar(")");
+        bodyDefinition();
+    }
+
+    /* 
+     * Usage : checkForExpressionLoop()
+     *   For : nothing
+     * After : performs a check wheather the expression loop is 
+     *         of a valid form or not if not then calls throwParserException to throw a parser exception
+    */
+    private void checkForExpressionLoop() throws Exception
+    {
+        /* Expression loop :
+         *   - 1 or more expressions 
+         *   - after each expression ';' should be seen
+        */
+        while(true)
+        {
+            expressionDefinition();
+            lexer.checkIfCurrentLexemeIsSingleChar(";");
+          
+            if(lexer.getLexeme().equals("}"))
+            {
+                break;
+            }
+        }
+    }
+
+    /* 
+     * Usage : checkIfCurrentLexemeIsSingleChar(charToCheck)
+     *   For : charToCheck is a string of lenght 1 
+     * After : checks if the current lexeme is equal to charToCheck if its not then it calls 
+     *         the throwParserException to throw a parser exception else it advances to the next lexeme
+     */
+    private void checkIfCurrentLexemeIsSingleChar(String charToCheck) throws Exception
+    {
+        // the naming is a bit confusing since equals accepts strings
+        if(!lexer.getLexeme().equals(charToCheck))
+        {
+            lexer.throwParserException("'"+charToCheck+"'");
+        }
+        lexer.advance();
+    }
+
+    /*
+     * Usage : checkIfCurrentTokenIsName(customMsg)
+     *   For : customMsg is a custom message that can be thrown if result is not true (CAN BE NULL)
+     * After : checks if the current token is NAME if true advance and return true
+     *         else call throwParserException to throw a parser exception
+     */
+    private boolean checkIfCurrentTokenIsName(String customMsg) throws Exception
+    {
+        if(lexer.getToken() != lexer.NAME)
+        {
+            lexer.throwParserException((customMsg == null)? "name declaration" : customMsg);
+        }
+        lexer.advance();
+        return true;
+    }
+
+    //--------------------------- PARSER : END -----------------------------------
+    
+    //-------------------------- HELPER FUNCTIONS --------------------------------
+
+    /* 
+     * Usage : throwParserException(expectedToSee)
+         For : expectedToSee is a string containing information of what was expected to see
+       After : Throws a ParserException while passing to it line and column numbers, the lexeme and the expectedToSee message.
+     */
+    private static void throwParserException(String expectedToSee) throws Exception
+    {
+        // the reason why i add 1 to the line and column is because their count starts at 0 and IDE's start from 1.
+        throw new ParserException(lexer.getLine() + 1, lexer.getColumn() + 1, lexer.getLexeme() , expectedToSee);
+    }
+
+    // A Custom exeption that our parser can throw. 
+    private static class ParserException extends Exception 
+    { 
+        public ParserException(int line, int column, String saw, String expectedToSee) 
+        {
+            super("Parser encountered an error found on line: "+ line +" column: "+ column + 
+                  " expected to see "+ expectedToSee + " but instead saw " + saw);
+        }
+
+        // just in case if we want to throw a custom message
+        public ParserException(String errorMessage) 
+        {
+            super(errorMessage);
+        }
+    }
 %}
 
 /* 
@@ -256,26 +605,31 @@ _OPNAME=[<>%+\-*\/\^:$|!=\~]+
 }
 
 {_OPNAME} {
-    if(nextLexeme.charAt(0) == '*' || nextLexeme.charAt(0) == '/' || nextLexeme.charAt(0) == '%'){
+    String current = yytext();
+    if(current.charAt(0) == '*' || current.charAt(0) == '/' || current.charAt(0) == '%'){
         return OPTNAME7;
     }
-    else if(nextLexeme.charAt(0) == '+' || nextLexeme.charAt(0) == '-' ){
+    else if(current.charAt(0) == '+' || current.charAt(0) == '-' ){
         return OPTNAME6;
     }
-    else if(nextLexeme.charAt(0) == '>' || nextLexeme.charAt(0) == '<' || nextLexeme.charAt(0) == '!' || nextLexeme.charAt(0) == '=' ){
+    else if(current.charAt(0) == '>' || current.charAt(0) == '<' || current.charAt(0) == '!' || current.charAt(0) == '=' ){
         return OPTNAME5;
     }
-    else if(nextLexeme.charAt(0) == '&' ){
+    else if(current.charAt(0) == '&' ){
         return OPTNAME4;
     }
-    else if(nextLexeme.charAt(0) == '|'){
+    else if(current.charAt(0) == '|'){
         return OPTNAME3;
     }
-    else if(nextLexeme.charAt(0) == ':'){
+    else if(current.charAt(0) == ':'){
         return OPTNAME2;
     }
-    else if(nextLexeme.charAt(0) == '?' || nextLexeme.charAt(0) == '^' || nextLexeme.charAt(0) == '~'){
+    else if(current.charAt(0) == '?' || current.charAt(0) == '^' || current.charAt(0) == '~'){
         return OPTNAME1;
+    }
+    else 
+    {
+        return ERROR;
     }
 }
 
