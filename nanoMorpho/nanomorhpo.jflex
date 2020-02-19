@@ -204,7 +204,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
         
         lexer.checkIfCurrentTokenIsName("name of function");
 
-        lexer.checkIfCurrentLexemeIsSingleChar("(");
+        lexer.over("(");
 
         if(lexer.getToken() == lexer.NAME)
         {
@@ -225,7 +225,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
             }
         }
 
-        lexer.checkIfCurrentLexemeIsSingleChar(")");
+        lexer.over(")");
 
         functionBody();
     }
@@ -239,7 +239,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
          *   - followed by 1 or more expressions
          *   - ending with '}'
          */
-        lexer.checkIfCurrentLexemeIsSingleChar("{");
+        lexer.over("{");
 
         // A declaration starts with the keyword var and is followed by 1 or more Name's 
         if(lexer.getToken() == lexer.VAR)
@@ -266,7 +266,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
 
         lexer.checkForExpressionLoop();
 
-        lexer.checkIfCurrentLexemeIsSingleChar("}");
+        lexer.over("}");
     }
     
     private void expressionDefinition() throws Exception
@@ -358,7 +358,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
                      break;
                    }
                }
-               lexer.checkIfCurrentLexemeIsSingleChar(")"); 
+               lexer.over(")"); 
            }
            
         }
@@ -381,7 +381,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
         {
             lexer.advance();
             expressionDefinition();
-            lexer.checkIfCurrentLexemeIsSingleChar(")"); 
+            lexer.over(")"); 
 
             /*
                 like Snorri says needs some chewing gum and ducktape, i forgot to 
@@ -395,10 +395,10 @@ Semantic values are expected in a field yylval of type parserval where parser is
         }
         else if(lexer.getToken() == lexer.IF)
         {
-            checkIfDefinitionAfterWhileOrIfHolds();
+            checkIfDefinitionAfterWhileOrControlFlowHolds();
             while(lexer.getToken() == lexer.ELSIF)
             {
-              checkIfDefinitionAfterWhileOrIfHolds();
+              checkIfDefinitionAfterWhileOrControlFlowHolds();
             }
           
             if(lexer.getToken() == lexer.ELSE)
@@ -409,7 +409,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
         }
         else if(lexer.getToken() == lexer.WHILE)
         {
-            checkIfDefinitionAfterWhileOrIfHolds();
+            checkIfDefinitionAfterWhileOrControlFlowHolds();
         }
         else 
         {
@@ -425,21 +425,21 @@ Semantic values are expected in a field yylval of type parserval where parser is
          *   - followed by 1 or more expressions
          *   - ending with '}'
         */
-        lexer.checkIfCurrentLexemeIsSingleChar("{");
+        lexer.over("{");
         lexer.checkForExpressionLoop();
-        lexer.checkIfCurrentLexemeIsSingleChar("}"); 
+        lexer.over("}"); 
     }
 
     /*
      * this sequence of functions appears 3 times i just figured
      * it would look cleaner if i extract it to a method of its own.
      */
-    private void checkIfDefinitionAfterWhileOrIfHolds() throws Exception
+    private void checkIfDefinitionAfterWhileOrControlFlowHolds() throws Exception
     {
         lexer.advance();
-        lexer.checkIfCurrentLexemeIsSingleChar("(");
+        lexer.over("(");
         expressionDefinition(); 
-        lexer.checkIfCurrentLexemeIsSingleChar(")");
+        lexer.over(")");
         bodyDefinition();
     }
 
@@ -458,7 +458,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
         while(true)
         {
             expressionDefinition();
-            lexer.checkIfCurrentLexemeIsSingleChar(";");
+            lexer.over(";");
           
             if(lexer.getLexeme().equals("}"))
             {
@@ -468,12 +468,12 @@ Semantic values are expected in a field yylval of type parserval where parser is
     }
 
     /* 
-     * Usage : checkIfCurrentLexemeIsSingleChar(charToCheck)
+     * Usage : over(charToCheck)
      *   For : charToCheck is a string of lenght 1 
      * After : checks if the current lexeme is equal to charToCheck if its not then it calls 
      *         the throwParserException to throw a parser exception else it advances to the next lexeme
      */
-    private void checkIfCurrentLexemeIsSingleChar(String charToCheck) throws Exception
+    private void over(String charToCheck) throws Exception
     {
         // the naming is a bit confusing since equals accepts strings
         if(!lexer.getLexeme().equals(charToCheck))
