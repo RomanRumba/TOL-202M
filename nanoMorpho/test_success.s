@@ -1,55 +1,6 @@
 ;;; Comment
 ;;; Comment
 ;;; Comment
-tests() {
-  var big_abc, palli; ;;; Tests functionBody() conditional var case
-  
-  ;;; tests Name condition 1 i.e if we see NAME and nothing afterwards
-  big_abc;
-  
-  ;;; tests Name condition 2, expr opname expr generation and Litteral
-  big_abc = big_abc + 2 ++ big_abc; ;;;
-  
-  ;;; tests Name condition 3, expr opname expr generation and Litteral
-  big_abc1(big_abc, 2 * 2 ++palli);
-  
-  ;;; test return expr, ( expr ), expr opname expr and litteral
-  return (big_abc * 2);
-  
-  ;;; test OPNAME expr, return expr, (expr)
-  * return(palli);
-  
-  ;;; testing single Litteral
-  222;
-  
-  ;;; test while(expr) and multiple expr in body
-  while( k == 3) {
-     big_abc = 2 + k;
-	 ++k;
-  };
-  
-  ;;; test if(expr) body, else if(expr) body, else if(expr) body, else(expr) body
-  if(k == 3 * 2) {
-     big_abc = 2 + k;
-	 ++k;
-  }
-  elsif(3==2){
-	big_abc = 2 + k;
-	 ++k;
-  }
-  elsif(3==2){
-	big_abc = 2 + k;
-	 ++k;
-  }
-  else{
-    big_abc = 2 + k;
-	 ++k;
-  };
-  
-   ;;; test ( expr ) , expr opname expr generation
-  (palli * 2) * (big_abc + 2);
-}
-;;; will also test multiple functions in one file
 realworldtest(arg) {
   ;;; 2 variables to store values in
   var variable1, variable2;
@@ -77,7 +28,40 @@ realworldtest(arg) {
   
   return variable1;
 }
+fibo(n)
+{
+	var i,f1,f2,tmp;
+	f1 = 1;
+	f2 = 1;
+	i = 0;
+	while( i!=n )
+	{
+		tmp = f1+f2;
+		f1 = f2;
+		f2 = tmp;
+		i = i+1;
+	};
+	f1;
+}
 
+f(n)
+{
+	if( n<2 )
+	{
+		1;
+	}
+	else
+	{
+		f(n-1)| f(n-2);
+	};
+}
+
+main()
+{
+	writeln(1:2:3:null);
+	writeln("fibo(35)="++fibo(35));
+	writeln("fibo(35)="++f(35));
+}
 
 
 
