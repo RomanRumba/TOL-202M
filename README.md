@@ -1,5 +1,15 @@
 # TÖL-202M Þýðendur
 
+## Verkefni 3 - Assigned: 02.21.2020 Due: 03.06.2020
+Code generator. Counts two steps. Estimated two weeks. The code generator contains both an intermediate code
+generator and a final code generator. Note that the final code generator can be reused
+in the later compiler. Separate grades may be given for the intermediate code generator
+and the final code generator, as described in weekly 1, but more likely the two steps get
+the same grade. The intermediate code generator is embedded in the parser whereas the
+final code generator can be a separate class, if desired.
+
+Snorri said its okay to to return this all in one file we don't need to seperate it.
+
 ## Verkefni 2 - Assigned: 02.07.2020 Due: 02.21.2020
 Create a Top-down parser. The parser needs only recognize input that is syntactically correct and show
 appropriate error messages for inputs that are grammatically incorrect.
