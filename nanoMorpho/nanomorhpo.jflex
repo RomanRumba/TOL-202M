@@ -13,6 +13,8 @@
 */
 
 import java.io.*;
+import java.util.Vector;
+import java.util.HashMap;
 
 // %% means the start of declarations
 %%
@@ -58,7 +60,6 @@ Semantic values are expected in a field yylval of type parserval where parser is
     final static int RETURN = 1007;
     final static int NAME = 1008;
     final static int OPNAME = 1009;
-    
 
     /*
         Variables that will contain tokens, lexemes and their position in the text (line, column) as they are recognized.
@@ -75,21 +76,30 @@ Semantic values are expected in a field yylval of type parserval where parser is
     private static int nextColumn;
 
     private static NanoMorpho lexer;
+    private static ProgramGenerator progGenerator = new ProgramGenerator();
+    
+    /*
+        The symbol table consists of the following two variables.
+        Where string is the name of the variable which is also the key
+        and the interger value is the location of that variable.
+    */
+	private static int varCount;
+	private static HashMap<String,Integer> varTable;
 
     public static void main( String[] args ) throws Exception
     {
         lexer = new NanoMorpho(new FileReader(args[0]));
         lexer.init();
-        lexer.beginParse();
-       
-      /*
-        // For debuggin purposes 
-        while(lexer.getToken() != ENDOFFILE )
-        {
-            System.out.println("(line,column): ("+(lexer.getLine() + 1) +","+(lexer.getColumn()+ 1) +") | "+lexer.getToken()+": \'"+lexer.getLexeme()+"\'");
-            lexer.advance();
-        }
-      */
+        Object[] generatedCode = lexer.beginParse();
+        progGenerator.generateProgram(args[0],generatedCode);
+        /*
+            // For debuggin purposes 
+            while(lexer.getToken() != ENDOFFILE )
+            {
+                System.out.println("(line,column): ("+(lexer.getLine() + 1) +","+(lexer.getColumn()+ 1) +") | "+lexer.getToken()+": \'"+lexer.getLexeme()+"\'");
+                lexer.advance();
+            }
+        */
     }
 
     /*
@@ -172,27 +182,77 @@ Semantic values are expected in a field yylval of type parserval where parser is
     {
         return nextColumn;
     }
+
+    /*
+       Adds a new variable to the symbol table.
+       Throws Error if the variable already exists.
+    */
+	private static void addVar( String name ) throws Exception
+	{
+		if( varTable.get(name) != null )
+        {
+            throw new Error("Variable "+name+" already exists, near line "+lexer.getNextLine());
+        }
+		varTable.put(name, varCount++);
+	}
+
+    /* 
+       Finds the location of an existing variable.
+       Throws Error if the variable does not exist.
+    */
+	private static int findVar( String name ) throws Exception
+	{
+		Integer res = varTable.get(name);
+		if( res == null )
+        {
+			throw new Error("Variable "+name+" does not exist, near line "+lexer.getNextLine());
+        }
+		return res;
+	}
     //--------------------------- GETTERS : END ----------------------------------
 
     //--------------------------- PARSER : START ---------------------------------
-    private void beginParse() throws Exception
+    private Object[] beginParse() throws Exception
     {
-        while(lexer.getToken() != lexer.ENDOFFILE)
-        {
-            lexer.function();
+        Vector<Object> code = new Vector<Object>();
+        try {
+            while(lexer.getToken() != lexer.ENDOFFILE)
+            {
+                code.add(lexer.function());
+            }
         }
+        catch( Throwable e )
+        {
+            System.out.println(e.getMessage());
+        }
+
+        return code.toArray();
     }
     
-    private void function() throws Exception
+    private Object[] function() throws Exception
     {
-        /* Function head description : 
+        // Each new function creates a new symbol table
+        varCount = 0;
+        varTable = new HashMap<String,Integer>();
+        // To store function name and the amount of arguments the function has
+        String currentFunctionName = "";
+        int argcount = 0;
+
+        /* 
+           Function head description : 
             - starts with NAME 
             - followed by '(' 
             - then with 0 or more NAME's that are seperated by ',' 
             - ending with ')'
             - then followed by the function BODY
         */
-        lexer.checkIfCurrentTokenIsName("name of function");
+        if(lexer.getToken() != lexer.NAME)
+        {
+            lexer.throwParserException("name of function");
+        }
+        currentFunctionName = lexer.getLexeme();
+        lexer.advance();
+
         lexer.over("(");
         if(lexer.getToken() == lexer.NAME)
         {
@@ -213,7 +273,8 @@ Semantic values are expected in a field yylval of type parserval where parser is
             }
         }
         lexer.over(")");
-
+        argcount = varCount;
+        
         /*
          * Function body definition : 
          *   - starts with '{'
@@ -245,72 +306,103 @@ Semantic values are expected in a field yylval of type parserval where parser is
             }
         }
 
+        Vector<Object> expressions = new Vector<Object>();
         while(!lexer.getLexeme().equals("}"))
         {
-            lexer.expr();
+            expressions.add(lexer.expr());
             lexer.over(";");
         }
 
         lexer.over("}");
+
+        return (new Object[]{currentFunctionName, argcount, varCount, expressions.toArray()});
     }
     
-    private void expr() throws Exception
+    private Object[] expr() throws Exception
     {
-        /*
-         * Unlike the previous attempt following now the grammer.txt from ugla
-         */
+        Object[] res;
         if(lexer.getToken() == lexer.RETURN)
         {
             lexer.over(lexer.RETURN);
-            lexer.expr();
+            res = new Object[]{progGenerator.EXPRESSION_RETURN, lexer.expr()};
         }
         else if(lexer.getToken() == lexer.NAME && lexer.getNextLexeme().equals("="))
         {
+            int namePos = lexer.findVar(lexer.getLexeme());
             lexer.over(lexer.NAME);
             lexer.over("=");
-            lexer.expr();
+            res = new Object[]{progGenerator.EXPRESSION_STORE, namePos, lexer.expr()};
         }
         else 
         {
-            lexer.binopexpr();
+            return lexer.binopexpr(0); // er ekki viss um þetta hvort þetta á að vera 0
         }
+
+        return res;
     }
 
-    private void binopexpr() throws Exception
+    private Object[] binopexpr(int pri) throws Exception
     {
-        lexer.smallexpr();
-        while(lexer.getToken() == lexer.OPNAME)
+        if(pri > 7)
         {
-            lexer.over(lexer.OPNAME);
-            lexer.smallexpr();
+            return lexer.smallexpr();
+        }
+        else if(pri == 2)
+        {
+            Object[] e = lexer.binopexpr(3);
+            if(lexer.getToken() == lexer.OPNAME && lexer.priority(lexer.getLexeme()) == 2)
+            {
+                String op = lexer.getLexeme();
+                lexer.advance();
+                e = new Object[]{progGenerator.EXPRESSION_CALL,op,new Object[]{e, lexer.binopexpr(2)}};
+            }
+            return e;
+        }
+        else 
+        {
+            Object[] e = binopexpr(pri+1);
+            while(lexer.getToken() == lexer.OPNAME && lexer.priority(lexer.getLexeme()) == pri )
+            {
+                String op = lexer.getLexeme();
+                lexer.advance();
+                e = new Object[]{progGenerator.EXPRESSION_CALL, op, new Object[]{e, lexer.binopexpr(pri+1)}};
+            }
+            return e;
         }
     }
 
-    private void smallexpr() throws Exception
+    private Object[] smallexpr() throws Exception
     {
+        Object[] res = null; // remove null when you done
         switch(lexer.getToken())
         {
             case NAME:
+                String currName = lexer.getLexeme();
                 lexer.over(lexer.NAME);
                 if(lexer.getLexeme().equals("("))
                 {
                     lexer.over("(");
+                    Vector<Object> args = new Vector<Object>();
                     if(!lexer.getLexeme().equals(")")){
                         for(;;)
                         {
-                            lexer.expr();
+                            args.add(lexer.expr());
                             if(lexer.getLexeme().equals(")") ) break;
                             lexer.over(",");
                         }
                     }
                     lexer.over(")");
+                    res = new Object[]{progGenerator.EXPRESSION_CALL, currName, args.toArray()};
                 }
-                return;
+                else
+                {
+                    res = new Object[]{progGenerator.EXPRESSION_FETCH, lexer.findVar(currName)};
+                }
+                break;
             case WHILE:
                 lexer.over(lexer.WHILE);
-                lexer.expr();
-                lexer.body();
-                return;
+                res = new Object[]{progGenerator.EXPRESSION_WHILE, lexer.expr(), lexer.body()};
+                break;
             case IF:
                 lexer.over(lexer.IF);
                 lexer.expr();
@@ -326,33 +418,36 @@ Semantic values are expected in a field yylval of type parserval where parser is
                     lexer.over(lexer.ELSE);
                     lexer.body();
                 }
-                return;
+                return null;
             case LITERAL:
+                res = new Object[]{progGenerator.EXPRESSION_LITERAL, lexer.getLexeme()};
                 lexer.over(lexer.LITERAL);
-                return;
+                break;
             case OPNAME:
                 lexer.over(lexer.OPNAME);
-                lexer.smallexpr();
-                return;
+                return lexer.smallexpr();
             case '(':
                 lexer.over("(");
                 lexer.expr();
                 lexer.over(")");
-                return;
+                return null;
             default:
                 lexer.throwParserException("an expression");
         }
+        return res;
     }
 
-    private void body() throws Exception
+    private Object[] body() throws Exception
     {
+        Vector<Object> res = new Vector<Object>();
         lexer.over("{");
         while(!lexer.getLexeme().equals("}"))
         {
-            lexer.expr();
+            res.add(lexer.expr());
             lexer.over(";");
         }
         lexer.over("}");
+        return new Object[]{progGenerator.EXPRESSION_BODY, res.toArray()};
     }
 
     /* 
@@ -398,6 +493,7 @@ Semantic values are expected in a field yylval of type parserval where parser is
         {
             lexer.throwParserException((customMsg == null)? "name declaration" : customMsg);
         }
+        lexer.addVar(lexer.getLexeme());
         lexer.advance();
         return true;
     }
@@ -405,7 +501,37 @@ Semantic values are expected in a field yylval of type parserval where parser is
     //--------------------------- PARSER : END -----------------------------------
     
     //-------------------------- HELPER FUNCTIONS --------------------------------
- 
+    private static int priority(String opname )
+    {
+        switch( opname.charAt(0) )
+        {
+        case '^':
+        case '?':
+        case '~':
+            return 1;
+        case ':':
+            return 2;
+        case '|':
+            return 3;
+        case '&':
+            return 4;
+        case '!':
+        case '=':
+        case '<':
+        case '>':
+            return 5;
+        case '+':
+        case '-':
+            return 6;
+        case '*':
+        case '/':
+        case '%':
+            return 7;
+        default:
+            throw new Error("Invalid opname");
+        }
+    }
+
     private static String TokenToName(int token) throws Exception
     {
         if( token < 1000 ) return ""+(char)token;
