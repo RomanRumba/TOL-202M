@@ -383,7 +383,8 @@ Semantic values are expected in a field yylval of type parserval where parser is
                 {
                     lexer.over("(");
                     Vector<Object> args = new Vector<Object>();
-                    if(!lexer.getLexeme().equals(")")){
+                    if(!lexer.getLexeme().equals(")"))
+                    {
                         for(;;)
                         {
                             args.add(lexer.expr());
@@ -404,21 +405,46 @@ Semantic values are expected in a field yylval of type parserval where parser is
                 res = new Object[]{progGenerator.EXPRESSION_WHILE, lexer.expr(), lexer.body()};
                 break;
             case IF:
+                Object[] cond, thenCond;
+                Vector<Object> elseexpresions = new Vector<Object>();
                 lexer.over(lexer.IF);
-                lexer.expr();
-                lexer.body();
+                cond = lexer.expr();
+                thenCond = lexer.body();
+                res = new Object[]{progGenerator.EXPRESSION_IF, cond, thenCond, null};
+
                 while(lexer.getToken() == lexer.ELSIF)
                 {
+                    Object[] lastObj;
+                    if(elseexpresions.size() == 0)
+                    {
+                       lastObj = res;
+                    }
+                    else
+                    {
+                        lastObj = (Object[])elseexpresions.lastElement();
+                    }
                     lexer.over(lexer.ELSIF);
-                    lexer.expr();
-                    lexer.body();
+                    elseexpresions.add(new Object[]{progGenerator.EXPRESSION_IF, lexer.expr(), lexer.body(), lastObj});
                 }
+
                 if(lexer.getToken() == lexer.ELSE)
                 {
+                    Object[] lastObj;
+                    if(elseexpresions.size() == 0)
+                    {
+                       lastObj = res;
+                    }
+                    else
+                    {
+                        lastObj = (Object[])elseexpresions.lastElement();
+                    }
                     lexer.over(lexer.ELSE);
-                    lexer.body();
+                    elseexpresions.add(new Object[]{progGenerator.EXPRESSION_IF,
+                                                    new Object[]{progGenerator.EXPRESSION_LITERAL, "true"},
+                                                    lexer.body(), 
+                                                    null});
                 }
-                return null;
+                break;
             case LITERAL:
                 res = new Object[]{progGenerator.EXPRESSION_LITERAL, lexer.getLexeme()};
                 lexer.over(lexer.LITERAL);
@@ -428,9 +454,9 @@ Semantic values are expected in a field yylval of type parserval where parser is
                 return lexer.smallexpr();
             case '(':
                 lexer.over("(");
-                lexer.expr();
+                res = lexer.expr();
                 lexer.over(")");
-                return null;
+                break;
             default:
                 lexer.throwParserException("an expression");
         }
