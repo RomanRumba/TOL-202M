@@ -4,9 +4,6 @@ public class ProgramGenerator
     /*
         ["RETURN",expr]
         ["STORE",pos,expr]
-        ["OR",expr,expr]
-        ["AND",expr,expr]
-        ["NOT",expr]
         ["CALL",name,args]
         ["FETCH",pos]
         ["LITERAL",string]
@@ -16,9 +13,6 @@ public class ProgramGenerator
     */
     public final static String EXPRESSION_RETURN = "RETURN";
     public final static String EXPRESSION_STORE = "STORE";
-    public final static String EXPRESSION_OR = "OR";
-    public final static String EXPRESSION_AND = "AND";
-    public final static String EXPRESSION_NOT = "NOT";
     public final static String EXPRESSION_CALL = "CALL";
     public final static String EXPRESSION_FETCH = "FETCH";
     public final static String EXPRESSION_LITERAL = "LITERAL";
@@ -32,7 +26,6 @@ public class ProgramGenerator
         _1, _2, _3 ... 
      */
     private static int nextLabel = 1;
-
 
     public void main(String[] args) {
         
@@ -149,14 +142,40 @@ public class ProgramGenerator
                 break;
               case EXPRESSION_IF:
                 //["IF",expr,expr,expr]
-                 break;
+                //      con  then  else
+                int labElse = newLabel();
+                int labEnd = newLabel();
+                generateJump(((Object[])(((Object[])expr)[1])),0,labElse);
+                generateExpr(((Object[])(((Object[])expr)[2])));
+                emit("(Go _"+labEnd+")");
+                emit("_"+labElse+":");
+                if(((Object[])(((Object[])expr)[3])) != null)
+                {
+                    generateExpr(((Object[])(((Object[])expr)[3])));
+                }
+                emit("_"+labEnd+":");
+                break;
               case EXPRESSION_WHILE:
                 //["WHILE",expr,expr]
-                 break;
+                int labTrue = newLabel();
+                int labFalse = newLabel();
+                emit("_"+labTrue+":");
+                generateJump(((Object[])(((Object[])expr)[1])),0,labFalse);
+                generateExpr(((Object[])(((Object[])expr)[2])));
+                emit("(Go _"+labTrue+")");
+                emit("_"+labFalse+":");
+                break;
               case EXPRESSION_STORE:
                 //["STORE",pos,expr]
                 generateExprP((Object[])((Object[])expr)[2]);
                 emit("(Store "+(int)((Object[])expr)[1]+")");
+                break;
+              case EXPRESSION_BODY:
+                //["BODY",exprs]
+                for (Object b_expr : (Object[])expr[1])
+                {
+                    generateExpr((Object[])b_expr);
+                }
                 break;
               default:
                 throw new Error("Unknown intermediate code type: \""+(String)((Object[])expr)[0]+"\"");
@@ -168,20 +187,11 @@ public class ProgramGenerator
     {
         switch ((String)((Object[])expr)[0])
         {
-            case EXPRESSION_RETURN:
+            case EXPRESSION_RETURN: // DUNO
                 //["RETURN",expr]
                 break;
-            case EXPRESSION_STORE:
+            case EXPRESSION_STORE: // DUNO
                 //["STORE",pos,expr]
-                break;
-            case EXPRESSION_OR:
-                //["OR",expr,expr]
-                break;
-            case EXPRESSION_AND:
-                //["AND",expr,expr]
-                break;
-            case EXPRESSION_NOT:
-                //["NOT",expr]
                 break;
             case EXPRESSION_CALL:
                 Object[] args = (Object[])((Object[])expr)[2];
@@ -204,17 +214,38 @@ public class ProgramGenerator
                 //["LITERAL",string]
                 emit("(MakeValP "+(String)((Object[])expr)[1]+")");
                 break;
-            case EXPRESSION_IF:
+            case EXPRESSION_IF: // DUNP
                 //["IF",expr,expr,expr]
                 break;
-            case EXPRESSION_WHILE:
+            case EXPRESSION_WHILE: // DUNO
                 //["WHILE",expr,expr]
                  break;
-            case EXPRESSION_BODY:
+            case EXPRESSION_BODY: // DUNO
                 //["BODY",exprs]
                 break;
             default:
-               break;
+                throw new Error("Unknown intermediate code type: \""+(String)((Object[])expr)[0]+"\"");
 		}
     }
+
+    private void generateJump(Object[] exr, int labelTrue, int labelFalse )
+	{
+		switch((String)exr[0])
+		{
+            case EXPRESSION_LITERAL:
+                 //["LITERAL",string]
+                String literal = (String)exr[1];
+                if(literal.equals("false") || literal.equals("null"))
+                {
+                    if( labelFalse!=0 ) emit("(Go _"+labelFalse+")");
+                    return;
+                }
+                if( labelTrue!=0 ) emit("(Go _"+labelTrue+")");
+                return;
+        default:
+			generateExpr(exr);
+			if( labelTrue!=0 ) emit("(GoTrue _"+labelTrue+")");
+			if( labelFalse!=0 ) emit("(GoFalse _"+labelFalse+")");
+		}
+	}
 }

@@ -414,35 +414,34 @@ Semantic values are expected in a field yylval of type parserval where parser is
 
                 while(lexer.getToken() == lexer.ELSIF)
                 {
-                    Object[] lastObj;
+                    lexer.over(lexer.ELSIF);
+                    Object[] elseExprToAdd = new Object[]{progGenerator.EXPRESSION_IF, lexer.expr(), lexer.body(), null};
                     if(elseexpresions.size() == 0)
                     {
-                       lastObj = res;
+                       res[3] = elseExprToAdd;
                     }
                     else
                     {
-                        lastObj = (Object[])elseexpresions.lastElement();
+                        ((Object[])elseexpresions.lastElement())[3] = elseExprToAdd;
                     }
-                    lexer.over(lexer.ELSIF);
-                    elseexpresions.add(new Object[]{progGenerator.EXPRESSION_IF, lexer.expr(), lexer.body(), lastObj});
+                    elseexpresions.add(elseExprToAdd);
                 }
 
                 if(lexer.getToken() == lexer.ELSE)
                 {
-                    Object[] lastObj;
+                    lexer.over(lexer.ELSE);
+                    Object[] elseExprToAdd = new Object[]{progGenerator.EXPRESSION_IF,
+                                                          new Object[]{progGenerator.EXPRESSION_LITERAL, "true"},
+                                                          lexer.body(), 
+                                                          null};
                     if(elseexpresions.size() == 0)
                     {
-                       lastObj = res;
+                       res[3] = elseExprToAdd;
                     }
                     else
                     {
-                        lastObj = (Object[])elseexpresions.lastElement();
+                        ((Object[])elseexpresions.lastElement())[3] = elseExprToAdd;
                     }
-                    lexer.over(lexer.ELSE);
-                    elseexpresions.add(new Object[]{progGenerator.EXPRESSION_IF,
-                                                    new Object[]{progGenerator.EXPRESSION_LITERAL, "true"},
-                                                    lexer.body(), 
-                                                    null});
                 }
                 break;
             case LITERAL:
