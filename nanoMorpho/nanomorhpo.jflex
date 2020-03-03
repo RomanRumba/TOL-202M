@@ -405,6 +405,38 @@ Semantic values are expected in a field yylval of type parserval where parser is
                 res = new Object[]{progGenerator.EXPRESSION_WHILE, lexer.expr(), lexer.body()};
                 break;
             case IF:
+                /*
+                    The idea here is to create a linked list of objects 
+                    f.x 
+                    if(expresions1)
+                    {
+                        expresions2
+                    } 
+                    elsif(expresions3)
+                    {
+                        expresions4
+                    }
+                    else
+                    {
+                        expresions5
+                    }
+                    would yield the following result
+
+                    [ IF,
+                      expresions1, 
+                      expresions2,
+                        [ IF,
+                          expresions3, 
+                          expresions4,
+                            [ IF,
+                              "true",
+                               expresions5 
+                            ]
+                        ]
+                    ]
+                   The reason to why all of these expressions are IF is because IF and ELSIF have the same 
+                   code generation and ELSE is just an if with a always true condition.
+                */
                 Object[] cond, thenCond;
                 Vector<Object> elseexpresions = new Vector<Object>();
                 lexer.over(lexer.IF);

@@ -1,16 +1,7 @@
 
 public class ProgramGenerator
 {
-    /*
-        ["RETURN",expr]
-        ["STORE",pos,expr]
-        ["CALL",name,args]
-        ["FETCH",pos]
-        ["LITERAL",string]
-        ["IF",expr,expr,expr]
-        ["WHILE",expr,expr]
-        ["BODY",exprs]
-    */
+    // Constants that represent the assembler functions to call.
     public final static String EXPRESSION_RETURN = "RETURN";
     public final static String EXPRESSION_STORE = "STORE";
     public final static String EXPRESSION_CALL = "CALL";
@@ -21,8 +12,8 @@ public class ProgramGenerator
     public final static String EXPRESSION_BODY = "BODY";
     
     /*
-        We need some types of unique labels to jump to in our generated code
-        the easiest and most simple one is auto incremented integers with '_' prefix
+        We need some types of unique labels to jump to (Go,GoFalse,GoTrue) in our generated code
+        the easiest and most simple one is auto incremented integers with the '_' prefix
         _1, _2, _3 ... 
      */
     private static int nextLabel = 1;
@@ -41,22 +32,30 @@ public class ProgramGenerator
     }
     
     /*
-        Usage: newLabel
+        Usage: newLabel()
           For: nothing
-        After: Returns nextLabel integer value and increments it by 1.
+        After: Returns nextLabel integer value and increments the nextLabel by 1.
      */
 	private static int newLabel()
 	{
 		return nextLabel++;
     }
     
+    /*
+        Usage: generateProgram(filename,funs)
+          For: - filename is a string that contains the filename of the program to generate
+               - funs is an object array where each entry is an array of the form [String, int, int, Object[]]
+                 NOTE: one funs entries must have string value of "main"
+        After: prints out morpho program named filename with the input provoided from funs.
+     */
     public void generateProgram(String filename, Object[] funs)
     {
         String programname = filename.substring(0,filename.indexOf('.'));
         System.out.println("\""+programname+".mexe\" = main in");
         System.out.println("!");
         System.out.println("{{");
-        for(int i = 0; i < funs.length; i++){
+        for(int i = 0; i < funs.length; i++)
+        {
             generateFunction((Object[])funs[i]);
         }
         System.out.println("}}");
@@ -64,9 +63,13 @@ public class ProgramGenerator
         System.out.println("BASIS;");
     }
 
+    /*
+        Usage: generateFunction(f)
+          For: - f is an object array of the form [String, int, int, Object[]]
+        After: prints out a morpho function with the input provoided.
+     */
     private void generateFunction(Object[] f)
     {
-        // f = {fname, argcount, varcount ,exprs}
         /*
             Example of the desired result
 
@@ -105,11 +108,24 @@ public class ProgramGenerator
 		emit("];");
     }
 
+    /*
+        Usage: generateExpr(expr)
+          For: - expr is an object array that can be one of the following
+                   ["RETURN",expr]
+                   ["STORE",pos,expr]
+                   ["CALL",name,args]
+                   ["FETCH",pos]
+                   ["LITERAL",string]
+                   ["IF",expr,expr,expr]
+                   ["WHILE",expr,expr]
+                   ["BODY",exprs]
+        After:  prints out the nessesary morpho assembler calls to create the given expr.
+     */
     private void generateExpr(Object[] expr)
     {
            switch ((String)((Object[])expr)[0])
            {
-              case EXPRESSION_RETURN: // Dont know if return should be here
+              case EXPRESSION_RETURN:
                 //["RETURN",expr]
                 generateExprP((Object[])((Object[])expr)[1]);
                 emit("(Return)");
@@ -120,6 +136,16 @@ public class ProgramGenerator
                 int i;
                 for(i=0; i != args.length; i++)
                 {
+                    /*
+                       Need to remember that when calling something the order should be
+                       0: generateExpr
+                       1: push
+                          generateExpr
+                       2: push
+                          generateExpr
+                          ..
+                          ..
+                     */
                     if(i==0)
                     {
                         generateExpr((Object[])args[i]);
@@ -129,7 +155,6 @@ public class ProgramGenerator
                         generateExprP((Object[])args[i]);
                     }
                 }
-                
                 emit("(Call #\""+(String)((Object[])expr)[1]+"[f"+i+"]\" "+i+")");
                 break;
               case EXPRESSION_FETCH:
@@ -149,6 +174,11 @@ public class ProgramGenerator
                 generateExpr(((Object[])(((Object[])expr)[2])));
                 emit("(Go _"+labEnd+")");
                 emit("_"+labElse+":");
+
+                /* 
+                  because the way our code is generated in nanomorhpo.jflex
+                  there will be a case where the 3rd value will be null.
+                */
                 if(((Object[])(((Object[])expr)[3])) != null)
                 {
                     generateExpr(((Object[])(((Object[])expr)[3])));
@@ -180,19 +210,29 @@ public class ProgramGenerator
               default:
                 throw new Error("Unknown intermediate code type: \""+(String)((Object[])expr)[0]+"\"");
            }
-        
     }
 
+    /*
+        Usage: generateExpr(expr)
+          For: - expr is an object array that can be one of the following
+                   ["RETURN",expr]
+                   ["STORE",pos,expr]
+                   ["CALL",name,args]
+                   ["FETCH",pos]
+                   ["LITERAL",string]
+                   ["IF",expr,expr,expr]
+                   ["WHILE",expr,expr]
+                   ["BODY",exprs]
+                NOTE: Atm only accepts 3 out 8, dont know if it should support all
+        After:  prints out the nessesary morpho assembler calls but with (Push) prepented.
+                i.e  
+                (Push)
+                generateExpr(expr)
+     */
     private void generateExprP(Object[] expr)
     {
         switch ((String)((Object[])expr)[0])
         {
-            case EXPRESSION_RETURN: // DUNO
-                //["RETURN",expr]
-                break;
-            case EXPRESSION_STORE: // DUNO
-                //["STORE",pos,expr]
-                break;
             case EXPRESSION_CALL:
                 Object[] args = (Object[])((Object[])expr)[2];
                 int i;
@@ -213,15 +253,6 @@ public class ProgramGenerator
             case EXPRESSION_LITERAL:
                 //["LITERAL",string]
                 emit("(MakeValP "+(String)((Object[])expr)[1]+")");
-                break;
-            case EXPRESSION_IF: // DUNP
-                //["IF",expr,expr,expr]
-                break;
-            case EXPRESSION_WHILE: // DUNO
-                //["WHILE",expr,expr]
-                 break;
-            case EXPRESSION_BODY: // DUNO
-                //["BODY",exprs]
                 break;
             default:
                 throw new Error("Unknown intermediate code type: \""+(String)((Object[])expr)[0]+"\"");
