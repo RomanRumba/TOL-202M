@@ -100,6 +100,19 @@ public class ProgramGenerator
         int varCount = (Integer)f[2];
 		emit("#\""+fname+"[f"+argCount+"]\" =");
         emit("[");
+        /* 
+            When we enter a function we only know the positions of the arguments,
+            there are no initialized positions for the variables so to fix this we create null and push it
+            to all the variable positions that way we have initialized all the variable positions. 
+         */
+        if(varCount > 0 )
+        {
+            emit("(MakeVal null)");
+            for(int i = 0; i < varCount; i++)
+            {
+                emit("(Push)");
+            }
+        }
         for (Object expr : (Object[])f[3])
         {
             generateExpr((Object[])expr);
@@ -197,7 +210,7 @@ public class ProgramGenerator
                 break;
               case EXPRESSION_STORE:
                 //["STORE",pos,expr]
-                generateExprP((Object[])((Object[])expr)[2]);
+                generateExpr((Object[])((Object[])expr)[2]);
                 emit("(Store "+(int)((Object[])expr)[1]+")");
                 break;
               case EXPRESSION_BODY:

@@ -5,10 +5,10 @@ NanoMorpho.class: NanoMorpho.java
 clear_all:
 	clear
 test_success: NanoMorpho.class test_success.s
-	java NanoMorpho test_success_basic.s
+	java NanoMorpho test_success.s
 
 Generate_morpho: 
-	java NanoMorpho test_success_basic.s | java -jar morpho.jar -c
+	java NanoMorpho test_success.s | java -jar morpho.jar -c
 
 Test_morpho_generated_code: 
-	java -jar morpho.jar test_success_basic
+	java -jar morpho.jar test_success
