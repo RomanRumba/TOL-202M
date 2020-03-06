@@ -17,6 +17,7 @@ string_Tests()
 	
 	writeln("ABC"++"DEF");
 	writeln(x++y);
+	newLine();
 }
 
 ;;; TESTS :
@@ -34,6 +35,7 @@ math_Tests()
 	writeln("Adding variables " ++ (a+b+c));
 	writeln(1.0+2.0+3.0);
 	writeln(1.0+2.0+3.0+1.0/3.0);
+	newLine();
 }
 
 ;;; TESTS :
@@ -62,6 +64,7 @@ list_Tests()
 	writeln(head(z:m));
 	writeln(tail(z:m));
 	writeln(head(z:m):tail(z:m));
+	newLine();
 }
 
 ;;; TESTS :
@@ -104,6 +107,28 @@ conditional_Tests(first,second)
 	else{
 		writeln("reached correct.");
 	};
+	
+	newLine();
+}
+
+;;; TESTS :
+;;; - only having if no else
+;;; - having if and elsif's but no else
+edgecase_conditional_Tests(first)
+{
+	if(first)
+	{
+		writeln("if condition with no else is reached");
+	};
+
+	if(first)
+	{
+		writeln("if condition with elsif but no else is reached");
+	}
+	elsif(!first)
+	{
+		writeln("elseif condition with no else is reached");
+	};
 
 }
 
@@ -121,6 +146,7 @@ fibo(n)
 		f2 = tmp;
 		i = i+1;
 	};
+	newLine();
 	f1;
 }
 
@@ -136,8 +162,14 @@ f(n)
 	};
 }
 
+newLine()
+{
+	writeln("");
+}
+
 main()
 {
+	
 	string_Tests();
 	math_Tests();
 	list_Tests();
@@ -145,15 +177,8 @@ main()
 	conditional_Tests(true,false);
 	conditional_Tests(false,true);
 	conditional_Tests(false,false);
+	edgecase_conditional_Tests(true);
+	edgecase_conditional_Tests(false);
 	writeln("none-recursive fibo(35)="++fibo(35));
 	writeln("recursive fibo(35)="++f(35));
 }
-
-
-
-
-
-
-
-
-
