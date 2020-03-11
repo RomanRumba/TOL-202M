@@ -1,5 +1,8 @@
 # TÖL-202M Þýðendur
 
+## Verkefni 4 - Assigned: 03.06.2020 Due: 03.27.2020
+Bottom-up compiler. Counts three steps. The compiler should parse, generate intermediate code and then generare final code so there are three steps being performed and each may get a separate grade, but more likely they all get the same grade.
+
 ## Verkefni 3 - Assigned: 02.21.2020 Due: 03.06.2020
 Code generator. Counts two steps. Estimated two weeks. The code generator contains both an intermediate code
 generator and a final code generator. Note that the final code generator can be reused
