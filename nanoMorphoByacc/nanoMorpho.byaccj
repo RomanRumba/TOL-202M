@@ -1,0 +1,65 @@
+%{
+	import java.io.*;
+	import java.util.*;
+%}
+
+%token <sval> LITERAL,NAME
+%token VAR,IF,ELSIF,ELSE,WHILE,RETURN,OPNAME
+%type <sval> function
+/* ,decl,expr,binopexpr,smallexpr,ifexpr,body */
+/* %type <ival> funcargs */
+
+
+%%
+
+program
+	:  function 	{ System.out.println($1); }
+	;
+
+function
+	:	 NAME { $$ = $1; }
+	;
+	
+
+%%
+
+private NanoMorphoLexer lexer;
+static private String name;
+int last_token_read;
+
+private int yylex()
+{
+	int yyl_return = -1;
+	try
+	{
+		yylval = null;
+		last_token_read = yyl_return = lexer.yylex();
+		if( yylval==null )
+			yylval = new NanoMorphoParserVal(NanoMorphoParser.yyname[yyl_return]);
+	}
+	catch (IOException e)
+	{
+		System.err.println("IO error: "+e);
+	}
+	return yyl_return;
+}
+
+public void yyerror( String error )
+{
+	System.out.println("Error:  "+error);
+	System.out.println("Token:  "+NanoMorphoParser.yyname[last_token_read]);
+	System.exit(1);
+}
+
+public NanoMorphoParser(Reader r)
+{
+	lexer = new NanoMorphoLexer(r, this);
+}
+
+public static void main( String args[] ) throws IOException
+{
+	NanoMorphoParser yyparser = new NanoMorphoParser(new FileReader(args[0]));
+	name = args[0].substring(0,args[0].lastIndexOf('.'));
+	yyparser.yyparse();
+}
+
