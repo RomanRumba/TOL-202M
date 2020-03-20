@@ -75,7 +75,34 @@ _OPNAME=[\+\-*/!%&=><\:\^\~&|?]+
 }
 
 {_OPNAME} {
-	return NanoMorphoParser.OPNAME;
+	yyparser.yylval = new NanoMorphoParserVal(yytext());
+	switch( yytext().charAt(0) )
+	{
+	case '^':
+	case '?':
+	case '~':
+		return NanoMorphoParser.OP1;
+	case ':':
+		return NanoMorphoParser.OP2;
+	case '|':
+		return NanoMorphoParser.OP3;
+	case '&':
+		return NanoMorphoParser.OP4;
+	case '!':
+	case '=':
+	case '<':
+	case '>':
+		return NanoMorphoParser.OP5;
+	case '+':
+	case '-':
+		return NanoMorphoParser.OP6;
+	case '*':
+	case '/':
+	case '%':
+		return NanoMorphoParser.OP7;
+	default:
+		throw new Error("Invalid opname");
+	}
 }
 
 ";;;".*$ {

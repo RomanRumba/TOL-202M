@@ -3,12 +3,18 @@
 	import java.util.*;
 %}
 
-%token <sval> LITERAL,NAME
+%token <sval> LITERAL,NAME,OP1,OP2,OP3,OP4,OP5,OP6,OP7
 %token VAR,IF,ELSIF,ELSE,WHILE,RETURN,OPNAME
-%type <obj> program, function
-/* ,decl,expr,binopexpr,smallexpr,ifexpr,body */
+%type <obj> program, function, exprs, expr
 %type <ival> funcargs 
-
+%left OP1
+%right OP2
+%left OP3
+%left OP4
+%left OP5
+%left OP6
+%left OP7
+%left UNOP
 
 %%
 
@@ -31,8 +37,8 @@ function
 		NAME '(' funcargs ')'
 		'{'
 			variables
-
-		'}' { $$ = new Object[]{$2, $4, varCount, null}; }
+			exprs
+		'}' { $$ = new Object[]{$2, $4, varCount, $8}; }
 	;
 
 /* count the number of arguments */
@@ -48,6 +54,18 @@ variables
 	| VAR funcargs ';' /* We can re-use funcargs */
 	;
 
+/* I dont know if its correct way of doing this not sure yet */
+exprs
+	: exprs  expr ';'	 		{ ((Vector<Object>)($1)).add($2); $$=$1; }
+	| expr ';'					{ $$ = $1; }
+	;
+
+expr
+	: NAME						{ $$=new Object[]{EXPRESSION_FETCH,findVar($1)}; }
+	;
+
+
+op	:	OP1 | OP2 | OP3 | OP4 | OP5 | OP6 | OP7 ;
 
 %%
 
@@ -152,9 +170,7 @@ public static void main( String args[] ) throws IOException
         System.out.println("{{");
         for(int i = 0; i < funs.length; i++)
         {
-			Object[] current = ((Object[])funs[i]);
-	     	System.out.println(current[0]+ " arg count: " + current[1] + " var count: " + current[2]); 
-           // generateFunction((Object[])funs[i]);
+			generateFunction((Object[])funs[i]);
         }
         System.out.println("}}");
         System.out.println("*");
@@ -185,7 +201,7 @@ public static void main( String args[] ) throws IOException
         }
         for (Object expr : (Object[])f[3])
         {
-            generateExpr((Object[])expr);
+           // generateExpr((Object[])expr);
         }
         emit("(Return)");
 		emit("];");
