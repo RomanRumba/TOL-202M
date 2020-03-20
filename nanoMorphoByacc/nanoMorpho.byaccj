@@ -5,7 +5,7 @@
 
 %token <sval> LITERAL,NAME,OP1,OP2,OP3,OP4,OP5,OP6,OP7
 %token VAR,IF,ELSIF,ELSE,WHILE,RETURN,OPNAME
-%type <obj> program, function, exprs, expr, binopexpr, smallexpr, commasepExpr, ifsent
+%type <obj> program, function, exprs, expr, binopexpr, smallexpr, commasepExpr, elseiforelse, elseifsent, elsesent
 %type <ival> funcargs 
 %left OP1
 %right OP2
@@ -78,6 +78,7 @@ expr
 	| smallexpr OP7
 	| op expr %prec UNOP */
 
+/* OPname og IF eftir hér */
 smallexpr 
 	: NAME '(' commasepExpr ')' { $$ = new Object[]{EXPRESSION_CALL, $1, ((Vector<Object>)($3)).toArray()}; }
 	| NAME 						{ $$ = new Object[]{EXPRESSION_FETCH, findVar($1)}; }
@@ -87,6 +88,30 @@ smallexpr
 	  '{'
 		  exprs
 	  '}' 						{ $$ = new Object[]{EXPRESSION_WHILE, $3, ((Vector<Object>)($6)).toArray()}; }  
+	| IF '(' expr ')'
+	  '{'
+	  	 exprs
+	  '}'
+	  elseiforelse				{ $$ = new Object[]{EXPRESSION_IF, $3, ((Vector<Object>)($6)).toArray(), $8}; }
+	;
+/* TODO: Figure out the most comfy way to make this linked list work */
+
+elseiforelse
+	: /* empty */ 				{ $$ = null; }
+	| 
+	;
+
+elseifsent
+	: /* empty */ 				{ $$ = null; }
+	| 
+	;
+
+elsesent
+	: /* empty */ 				{ $$ = null; }
+	| ELSE 
+	  '{'
+         exprs
+	  '}'						{ $$ = new Object[]{EXPRESSION_IF, new Object[]{EXPRESSION_LITERAL, "true"}, ((Vector<Object>)($3)).toArray(), null};}
 	;
 
 commasepExpr
