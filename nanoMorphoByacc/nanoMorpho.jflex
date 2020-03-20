@@ -70,6 +70,7 @@ _OPNAME=[\+\-*/!%&=><\:\^\~&|?]+
 }
 
 {_NAME} {
+	yyparser.yylval = new NanoMorphoParserVal(yytext());
 	return NanoMorphoParser.NAME;
 }
 
