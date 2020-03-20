@@ -4,5 +4,6 @@
 main(a, c ,d)
 {
 	var x,y,z;
-	x;
+	x = 2;
+	y = 1;
 }

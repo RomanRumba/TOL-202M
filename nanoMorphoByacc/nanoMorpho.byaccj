@@ -5,7 +5,7 @@
 
 %token <sval> LITERAL,NAME,OP1,OP2,OP3,OP4,OP5,OP6,OP7
 %token VAR,IF,ELSIF,ELSE,WHILE,RETURN,OPNAME
-%type <obj> program, function, exprs, expr
+%type <obj> program, function, exprs, expr, binopexpr, smallexpr, commasepExpr, ifsent
 %type <ival> funcargs 
 %left OP1
 %right OP2
@@ -38,7 +38,7 @@ function
 		'{'
 			variables
 			exprs
-		'}' { $$ = new Object[]{$2, $4, varCount, $8}; }
+		'}' { $$ = new Object[]{$2, $4, varCount, ((Vector<Object>)($8)).toArray()}; }
 	;
 
 /* count the number of arguments */
@@ -57,13 +57,43 @@ variables
 /* I dont know if its correct way of doing this not sure yet */
 exprs
 	: exprs  expr ';'	 		{ ((Vector<Object>)($1)).add($2); $$=$1; }
-	| expr ';'					{ $$ = $1; }
+	| expr ';'					{ $$ = new Vector<Object>(); ((Vector<Object>)($$)).add($1); }
 	;
 
+/* pretty basic i just translated what i wrote in jflex to this and it seem to work */
 expr
-	: NAME						{ $$=new Object[]{EXPRESSION_FETCH,findVar($1)}; }
+	: RETURN expr				{ $$ = new Object[]{EXPRESSION_RETURN, $2}; }
+	| NAME '=' expr				{ $$ = new Object[]{EXPRESSION_STORE, findVar($1), $3}; }
+	| binopexpr 				{ $$ = $1; }
 	;
 
+/* I HAVE NO IDEA WHAT TO DO HERE */
+/*binopexpr 
+	: smallexpr OP1 
+	| smallexpr OP2
+	| smallexpr OP3
+	| smallexpr OP4
+	| smallexpr OP5
+	| smallexpr OP6
+	| smallexpr OP7
+	| op expr %prec UNOP */
+
+smallexpr 
+	: NAME '(' commasepExpr ')' { $$ = new Object[]{EXPRESSION_CALL, $1, ((Vector<Object>)($3)).toArray()}; }
+	| NAME 						{ $$ = new Object[]{EXPRESSION_FETCH, findVar($1)}; }
+	| LITERAL					{ $$ = new Object[]{EXPRESSION_LITERAL, $1}; }
+	| '(' expr ')'				{ $$ = $2; }
+	| WHILE '(' expr ')'
+	  '{'
+		  exprs
+	  '}' 						{ $$ = new Object[]{EXPRESSION_WHILE, $3, ((Vector<Object>)($6)).toArray()}; }  
+	;
+
+commasepExpr
+	: /* empty */ 				{ $$ = new Vector<Object>(); }
+	| commasepExpr ',' expr		{ ((Vector<Object>)($1)).add($3); $$=$1; }
+	| expr						{ $$ = new Vector<Object>(); ((Vector<Object>)($$)).add($1); }
+	;
 
 op	:	OP1 | OP2 | OP3 | OP4 | OP5 | OP6 | OP7 ;
 
@@ -184,13 +214,10 @@ public static void main( String args[] ) throws IOException
         String fname = (String)f[0];
         int argCount = (Integer)f[1];
         int varCount = (Integer)f[2];
+		
 		emit("#\""+fname+"[f"+argCount+"]\" =");
         emit("[");
-        /* 
-            When we enter a function we only know the positions of the arguments,
-            there are no initialized positions for the variables so to fix this we create null and push it
-            to all the variable positions that way we have initialized all the variable positions. 
-         */
+      
         if(varCount > 0 )
         {
             emit("(MakeVal null)");
@@ -199,9 +226,10 @@ public static void main( String args[] ) throws IOException
                 emit("(Push)");
             }
         }
+
         for (Object expr : (Object[])f[3])
         {
-           // generateExpr((Object[])expr);
+           generateExpr((Object[])expr);
         }
         emit("(Return)");
 		emit("];");
