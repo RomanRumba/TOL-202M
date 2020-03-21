@@ -70,13 +70,13 @@ expr
 
 /* There is something wrong with binopexpr need to check it out abit better */
 binopexpr 
-	: smallexpr OP1 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
-	| smallexpr OP2 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
-	| smallexpr OP3 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
-	| smallexpr OP4 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
-	| smallexpr OP5 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
-	| smallexpr OP6 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
-	| smallexpr OP7 smallexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
+	: binopexpr OP1 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
+	| binopexpr OP2 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
+	| binopexpr OP3 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
+	| binopexpr OP4 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
+	| binopexpr OP5 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
+	| binopexpr OP6 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
+	| binopexpr OP7 smallexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
 	| smallexpr					{ $$ = $1; }
 	;
 
