@@ -1,9 +1,8 @@
 ;;; Bunch of tests that were obtained from the morpho workbench
 ;;; Note : since this is nanoMorpho some things had to be modified to work here
 
-main(a, c ,d)
+main()
 {
 	var x,y,z;
-	x = 2;
-	y = 1;
+	writeln(2+3*(4+5));
 }

@@ -11,4 +11,4 @@ test:
 	java NanoMorphoParser test_success.s
 
 clean:
-	rm -rf *.class *~ *.java *.bak yacc.*
+	rm -rf *.class *~ *.java *.bak yacc.* *.mexe
