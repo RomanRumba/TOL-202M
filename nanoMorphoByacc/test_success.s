@@ -4,5 +4,5 @@
 main()
 {
 	var x,y,z;
-	writeln(2+3*(4+5));
+	writeln(1:2+3*(4+5):null);
 }

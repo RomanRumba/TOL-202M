@@ -76,11 +76,11 @@ binopexpr
 	| smallexpr OP4 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
 	| smallexpr OP5 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
 	| smallexpr OP6 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
-	| smallexpr OP7 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
-
+	| smallexpr OP7 smallexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
+	| smallexpr					{ $$ = $1; }
 	;
 
-/* OPname eftir hér */
+/* Not 100% sure if op smallexpr %prec UNOP needs to be here or in binopexpr */
 smallexpr 
 	: NAME '(' commasepExpr ')' { $$ = new Object[]{EXPRESSION_CALL, $1, ((Vector<Object>)($3)).toArray()}; }
 	| NAME 						{ $$ = new Object[]{EXPRESSION_FETCH, findVar($1)}; }
@@ -95,7 +95,7 @@ smallexpr
 	  	 exprs
 	  '}'
 	  elseiforelse				{ $$ = new Object[]{EXPRESSION_IF, $3, ((Vector<Object>)($6)).toArray(), $8}; }
-
+	| op smallexpr %prec UNOP   { $$ = $2; }
 	;
 
 elseiforelse
