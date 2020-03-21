@@ -37,4 +37,4 @@ Test_morpho_generated_code:
 	java -jar morpho.jar test_success
 
 clean:
-	rm -rf *.class *~ *.java *.bak yacc.* *.mexe
+	rm -rf *.class *~ *.mexe *.bak yacc.* *.java  

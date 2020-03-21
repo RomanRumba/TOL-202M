@@ -89,12 +89,12 @@ smallexpr
 	| WHILE '(' expr ')'
 	  '{'
 		  exprs
-	  '}' 						{ $$ = new Object[]{EXPRESSION_WHILE, $3, ((Vector<Object>)($6)).toArray()}; }  
+	  '}' 						{ $$ = new Object[]{EXPRESSION_WHILE, $3, new Object[]{EXPRESSION_BODY, ((Vector<Object>)($6)).toArray()}}; }  
 	| IF '(' expr ')'
 	  '{'
 	  	 exprs
 	  '}'
-	  elseiforelse				{ $$ = new Object[]{EXPRESSION_IF, $3, ((Vector<Object>)($6)).toArray(), $8}; }
+	  elseiforelse				{ $$ = new Object[]{EXPRESSION_IF, $3, new Object[]{EXPRESSION_BODY, ((Vector<Object>)($6)).toArray()}, $8}; }
 	| op smallexpr %prec UNOP   { $$ = $2; }
 	;
 
@@ -109,23 +109,23 @@ elseifsent
 	  '{'
 		 exprs
 	  '}'
-	  elseifsent 				{ $$ = new Object[]{EXPRESSION_IF, $3, ((Vector<Object>)($6)).toArray(), $8}; }
+	  elseifsent 				{ $$ = new Object[]{EXPRESSION_IF, $3, new Object[]{EXPRESSION_BODY, ((Vector<Object>)($6)).toArray()}, $8}; }
 	| ELSIF '(' expr ')'
 	  '{'
 		 exprs
 	  '}'
-	  elsesent 					{ $$ = new Object[]{EXPRESSION_IF, $3, ((Vector<Object>)($6)).toArray(), $8}; }
+	  elsesent 					{ $$ = new Object[]{EXPRESSION_IF, $3, new Object[]{EXPRESSION_BODY, ((Vector<Object>)($6)).toArray()}, $8}; }
 	| ELSIF '(' expr ')'
 	  '{'
 		 exprs
-	  '}'						{ $$ = new Object[]{EXPRESSION_IF, $3, ((Vector<Object>)($6)).toArray(), null}; }
+	  '}'						{ $$ = new Object[]{EXPRESSION_IF, $3, new Object[]{EXPRESSION_BODY, ((Vector<Object>)($6)).toArray()}, null}; }
 	;
 
 elsesent
 	: ELSE 
 	  '{'
          exprs
-	  '}'						{ $$ = new Object[]{EXPRESSION_IF, new Object[]{EXPRESSION_LITERAL, "true"}, ((Vector<Object>)($3)).toArray(), null};}
+	  '}'						{ $$ = new Object[]{EXPRESSION_IF, new Object[]{EXPRESSION_LITERAL, "true"}, new Object[]{EXPRESSION_BODY, ((Vector<Object>)($3)).toArray()}, null};}
 	;
 
 commasepExpr

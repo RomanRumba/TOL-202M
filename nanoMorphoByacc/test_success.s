@@ -68,6 +68,100 @@ list_Tests()
 	newLine();
 }
 
+;;; TESTS :
+;;; - reciving and using arguments
+;;; - condional flows 
+;;; - body expressions inside IF statements
+conditional_Tests(first,second)
+{
+	writeln("conditional_Tests called with first="++first++" second="++ second);
+	if(first)
+	{
+		if(second)
+		{
+			writeln("resutl: first="++first++" second="++ second);
+		}
+		else
+		{
+			writeln("resutl: first="++first++" second="++ second);
+		};
+	}
+	else{
+		if(second)
+		{
+			writeln("resutl: first="++first++" second="++ second);
+		}
+		else
+		{
+			writeln("resutl: first="++first++" second="++ second);
+		};
+	};
+
+	;;; Tests IF(expressions) and elsif(expressions)
+	if(first == true && second == false){
+		writeln("reached when first is true and second is false");
+	}
+	elsif(first == false && second == true)
+	{
+		writeln("reached when first is false and second is true");
+	}
+	else{
+		writeln("reached correct.");
+	};
+	
+	newLine();
+}
+
+;;; TESTS :
+;;; - only having if no else
+;;; - having if and elsif's but no else
+edgecase_conditional_Tests(first)
+{
+	if(first)
+	{
+		writeln("if condition with no else is reached");
+	};
+
+	if(first)
+	{
+		writeln("if condition with elsif but no else is reached");
+	}
+	elsif(!first)
+	{
+		writeln("elseif condition with no else is reached");
+	};
+
+}
+
+;;; fibo and f are from test.nm from nanomorphoparser.zip in ugla 
+fibo(n)
+{
+	var i,f1,f2,tmp;
+	f1 = 1;
+	f2 = 1;
+	i = 0;
+	while( i!=n )
+	{
+		tmp = f1+f2;
+		f1 = f2;
+		f2 = tmp;
+		i = i+1;
+	};
+	newLine();
+	f1;
+}
+
+f(n)
+{
+	if( n<2 )
+	{
+		1;
+	}
+	else
+	{
+		f(n-1) + f(n-2);
+	};
+}
 
 newLine()
 {
@@ -76,7 +170,16 @@ newLine()
 
 main()
 {
+	
 	string_Tests();
 	math_Tests();
 	list_Tests();
+	conditional_Tests(true,true);
+	conditional_Tests(true,false);
+	conditional_Tests(false,true);
+	conditional_Tests(false,false);
+	edgecase_conditional_Tests(true);
+	edgecase_conditional_Tests(false);
+	writeln("none-recursive fibo(35)="++fibo(35));
+	writeln("recursive fibo(35)="++f(35));
 }
