@@ -24,17 +24,17 @@ test: NanoMorphoParser.class NanoMorphoLexer.class NanoMorphoParserVal.class
 	echo "Testing parser"
 	java NanoMorphoParser test_success.s
 
-Generate_morpho: 
+Generate_morpho:
 	echo ""
 	echo ""
 	echo "Generating morpho from the test file"
 	java NanoMorphoParser test_success.s | java -jar morpho.jar -c
 
-Test_morpho_generated_code: 
+Test_morpho_generated_code:
 	echo ""
 	echo ""
 	echo "Executing the morpho code"
 	java -jar morpho.jar test_success
 
 clean:
-	rm -rf *.class *~ *.mexe *.bak yacc.* *.java  
+	rm -rf *.class *~ *.mexe *.bak yacc.* *.java

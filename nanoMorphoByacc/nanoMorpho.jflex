@@ -9,7 +9,7 @@
 %class NanoMorphoLexer
 %byaccj
 %line
-%column 
+%column
 %unicode
 
 %{
