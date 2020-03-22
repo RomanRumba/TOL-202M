@@ -5,20 +5,20 @@ NanoMorpho.java:
 	echo "Jflex result: "
 	java -jar jflex-full-1.7.0.jar nanoMorpho.jflex
 
-NanoMorphoParser.java NanoMorphoParserVal.java:
+NanoMorphoParser.java NanoMorphoParserVal.java: NanoMorpho.java
 	echo ""
 	echo ""
 	echo "Byacc result: "
-	./byacc -Jclass=NanoMorphoParser nanoMorpho.byaccj
+	byaccj -Jclass=NanoMorphoParser nanoMorpho.byaccj
 
 
-NanoMorphoParser.class NanoMorphoLexer.class NanoMorphoParserVal.class:
+NanoMorphoParser.class NanoMorphoLexer.class NanoMorphoParserVal.class: NanoMorphoParser.java NanoMorphoParserVal.java
 	echo ""
 	echo ""
 	echo "Compiling to java"
 	javac NanoMorphoParser.java NanoMorphoLexer.java NanoMorphoParserVal.java
 
-test:
+test: NanoMorphoParser.class NanoMorphoLexer.class NanoMorphoParserVal.class
 	echo ""
 	echo ""
 	echo "Testing parser"
