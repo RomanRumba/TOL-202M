@@ -36,5 +36,17 @@ Test_morpho_generated_code: Generate_morpho
 	echo "Executing the morpho code"
 	java -jar morpho.jar test_success
 
+gen_ava: NanoMorphoParser.class NanoMorphoLexer.class NanoMorphoParserVal.class
+	echo ""
+	echo ""
+	echo "Generating ava7's nanomorpho"
+	java NanoMorphoParser ava7.nm | java -jar morpho.jar -c
+
+test_ava: gen_ava
+	echo ""
+	echo ""
+	echo "Testing ava7's nanomorpho"
+	java -jar morpho.jar ava7
+
 clean:
 	rm -rf *.class *~ *.mexe *.bak yacc.* *.java
