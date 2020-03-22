@@ -7,6 +7,7 @@
 %token VAR,IF,ELSIF,ELSE,WHILE,RETURN,OPNAME
 %type <obj> program, function, exprs, expr, binopexpr, smallexpr, commasepExpr, elseiforelse, elseifsent, elsesent
 %type <ival> funcargs
+%type <sval> op
 %right RETURN '='
 %left OP1
 %right OP2
@@ -95,7 +96,7 @@ smallexpr
 	  	 exprs
 	  '}'
 	  elseiforelse				{ $$ = new Object[]{EXPRESSION_IF, $3, new Object[]{EXPRESSION_BODY, ((Vector<Object>)($6)).toArray()}, $8}; }
-	| op smallexpr %prec UNOP   { $$ = $2; }
+| op smallexpr %prec UNOP   { $$ = new Object[]{EXPRESSION_CALL, $1 , new Object[]{$2}}; }
 	;
 
 elseiforelse
