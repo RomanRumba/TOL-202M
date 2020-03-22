@@ -10,11 +10,11 @@ string_Tests()
 {
 	var x,y;
 	y = " Hi Back at you";
-	x = "Hello world";	
-	writeln(x);			
-	x = "Hello again";			
-	writeln(x);	
-	
+	x = "Hello world";
+	writeln(x);
+	x = "Hello again";
+	writeln(x);
+
 	writeln("ABC"++"DEF");
 	writeln(x++y);
 	newLine();
@@ -22,9 +22,9 @@ string_Tests()
 
 ;;; TESTS :
 ;;; - variable assignment
-;;; - Adding integers and variables 
+;;; - Adding integers and variables
 ;;; - concatenation of string and integers
-;;; - floating point math 
+;;; - floating point math
 math_Tests()
 {
 	var a,b,c;
@@ -40,11 +40,11 @@ math_Tests()
 
 ;;; TESTS :
 ;;; - variable assignment
-;;; - creating list with integers and null 
+;;; - creating list with integers and null
 ;;; - creating list with integers
 ;;; - creating list with strings
 ;;; - creating list from from variable values
-;;; - creating list from functions that return values 
+;;; - creating list from functions that return values
 list_Tests()
 {
 	var x,y,z,m;
@@ -70,7 +70,7 @@ list_Tests()
 
 ;;; TESTS :
 ;;; - reciving and using arguments
-;;; - condional flows 
+;;; - condional flows
 ;;; - body expressions inside IF statements
 conditional_Tests(first,second)
 {
@@ -79,21 +79,21 @@ conditional_Tests(first,second)
 	{
 		if(second)
 		{
-			writeln("resutl: first="++first++" second="++ second);
+			writeln("result: first="++first++" second="++ second);
 		}
 		else
 		{
-			writeln("resutl: first="++first++" second="++ second);
+			writeln("result: first="++first++" second="++ second);
 		};
 	}
 	else{
 		if(second)
 		{
-			writeln("resutl: first="++first++" second="++ second);
+			writeln("result: first="++first++" second="++ second);
 		}
 		else
 		{
-			writeln("resutl: first="++first++" second="++ second);
+			writeln("result: first="++first++" second="++ second);
 		};
 	};
 
@@ -180,6 +180,6 @@ main()
 	conditional_Tests(false,false);
 	edgecase_conditional_Tests(true);
 	edgecase_conditional_Tests(false);
-	writeln("none-recursive fibo(35)="++fibo(35));
+	writeln("non-recursive fibo(35)="++fibo(35));
 	writeln("recursive fibo(35)="++f(35));
 }

@@ -24,13 +24,13 @@ test: NanoMorphoParser.class NanoMorphoLexer.class NanoMorphoParserVal.class
 	echo "Testing parser"
 	java NanoMorphoParser test_success.s
 
-Generate_morpho:
+Generate_morpho: NanoMorphoParser.class NanoMorphoLexer.class NanoMorphoParserVal.class
 	echo ""
 	echo ""
 	echo "Generating morpho from the test file"
 	java NanoMorphoParser test_success.s | java -jar morpho.jar -c
 
-Test_morpho_generated_code:
+Test_morpho_generated_code: Generate_morpho
 	echo ""
 	echo ""
 	echo "Executing the morpho code"
