@@ -59,17 +59,17 @@ variables
 /* I dont know if its correct way of doing this not sure yet */
 exprs
 	: exprs  expr ';'	 		{ ((Vector<Object>)($1)).add($2); $$=$1; }
-	| expr ';'					{ $$ = new Vector<Object>(); ((Vector<Object>)($$)).add($1); }
+	| expr ';'					  { $$ = new Vector<Object>(); ((Vector<Object>)($$)).add($1); }
 	;
 
 /* pretty basic i just translated what i wrote in jflex to this and it seem to work */
 expr
 	: RETURN expr				{ $$ = new Object[]{EXPRESSION_RETURN, $2}; }
-	| NAME '=' expr				{ $$ = new Object[]{EXPRESSION_STORE, findVar($1), $3}; }
+	| NAME '=' expr			{ $$ = new Object[]{EXPRESSION_STORE, findVar($1), $3}; }
 	| binopexpr 				{ $$ = $1; }
 	;
 
-/* There is something wrong with binopexpr need to check it out abit better */
+/* Binary operations with 8 levels of priority */
 binopexpr
 	: binopexpr OP1 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
 	| binopexpr OP2 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
@@ -78,7 +78,7 @@ binopexpr
 	| binopexpr OP5 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
 	| binopexpr OP6 binopexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
 	| binopexpr OP7 smallexpr	{ $$ = new Object[]{EXPRESSION_CALL, $2 ,new Object[]{$1, $3}};}
-	| smallexpr					{ $$ = $1; }
+	| smallexpr					      { $$ = $1; }
 	;
 
 /* Not 100% sure if op smallexpr %prec UNOP needs to be here or in binopexpr */
@@ -96,7 +96,7 @@ smallexpr
 	  	 exprs
 	  '}'
 	  elseiforelse				{ $$ = new Object[]{EXPRESSION_IF, $3, new Object[]{EXPRESSION_BODY, ((Vector<Object>)($6)).toArray()}, $8}; }
-| op smallexpr %prec UNOP   { $$ = new Object[]{EXPRESSION_CALL, $1 , new Object[]{$2}}; }
+  | op smallexpr %prec UNOP   { $$ = new Object[]{EXPRESSION_CALL, $1 , new Object[]{$2}}; }
 	;
 
 elseiforelse
@@ -130,9 +130,9 @@ elsesent
 	;
 
 commasepExpr
-	: /* empty */ 				{ $$ = new Vector<Object>(); }
+	: /* empty */ 				    { $$ = new Vector<Object>(); }
 	| commasepExpr ',' expr		{ ((Vector<Object>)($1)).add($3); $$=$1; }
-	| expr						{ $$ = new Vector<Object>(); ((Vector<Object>)($$)).add($1); }
+	| expr						        { $$ = new Vector<Object>(); ((Vector<Object>)($$)).add($1); }
 	;
 
 op	:	OP1 | OP2 | OP3 | OP4 | OP5 | OP6 | OP7 ;
@@ -183,9 +183,10 @@ private int yylex()
 
 public void yyerror( String error )
 {
-	System.out.println("Error:  "+error);
-	System.out.println("Token:  "+NanoMorphoParser.yyname[last_token_read]);
-	System.exit(1);
+    System.out.printf("Error:  %s ", error);
+    System.out.printf(" in line: %d, column: %d,", lexer.getLine(), lexer.getColumn());
+    System.out.printf(" last token read:  %s\n", NanoMorphoParser.yyname[last_token_read]);
+    System.exit(1);
 }
 
 public NanoMorphoParser(Reader r)
