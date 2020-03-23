@@ -16,6 +16,9 @@
 
 public NanoMorphoParser yyparser;
 
+public int getLine() { return yyline+1; }
+public int getColumn() { return yycolumn+1; }
+
 public NanoMorphoLexer(java.io.Reader r, NanoMorphoParser yyparser )
 {
 	this(r);
