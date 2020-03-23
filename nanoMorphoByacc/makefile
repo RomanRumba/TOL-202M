@@ -1,3 +1,9 @@
+NanoMorphoParser.class NanoMorphoLexer.class NanoMorphoParserVal.class: NanoMorphoParser.java NanoMorphoParserVal.java
+	echo ""
+	echo ""
+	echo "Compiling to java"
+	javac NanoMorphoParser.java NanoMorphoLexer.java NanoMorphoParserVal.java
+
 clear:
 	clear
 
@@ -10,13 +16,6 @@ NanoMorphoParser.java NanoMorphoParserVal.java: NanoMorpho.java
 	echo ""
 	echo "Byacc result: "
 	byaccj -Jclass=NanoMorphoParser nanoMorpho.byaccj
-
-
-NanoMorphoParser.class NanoMorphoLexer.class NanoMorphoParserVal.class: NanoMorphoParser.java NanoMorphoParserVal.java
-	echo ""
-	echo ""
-	echo "Compiling to java"
-	javac NanoMorphoParser.java NanoMorphoLexer.java NanoMorphoParserVal.java
 
 test: NanoMorphoParser.class NanoMorphoLexer.class NanoMorphoParserVal.class
 	echo ""
