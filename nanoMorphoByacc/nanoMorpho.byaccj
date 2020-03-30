@@ -379,7 +379,7 @@ public static void main( String args[] ) throws IOException
                 break;
               case EXPRESSION_BODY:
                 //["BODY",exprs]
-                for (Object b_expr : e[1])
+                for (Object b_expr : (Object[])e[1])
                 {
                     generateExpr((Object[])b_expr);
                 }
@@ -390,7 +390,7 @@ public static void main( String args[] ) throws IOException
                 break;
               case EXPRESSION_AND:
                 int andLab = newLabel();
-                Object[] andExprs = e[2];
+                Object[] andExprs = (Object[])e[2];
                 generateExpr((Object[])andExprs[0]);
                 emit("(GoFalse _" + andLab + ")");
                 generateExpr((Object[])andExprs[1]);
@@ -398,7 +398,7 @@ public static void main( String args[] ) throws IOException
                 break;
               case EXPRESSION_OR:
                 int orLab = newLabel();
-                Object[] orExprs = e[2];
+                Object[] orExprs = (Object[])e[2];
                 generateExpr((Object[])orExprs[0]);
                 emit("(GoTrue _" + orLab + ")");
                 generateExpr((Object[])orExprs[1]);
