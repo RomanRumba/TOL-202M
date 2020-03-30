@@ -33,8 +33,8 @@ math_Tests()
 	c = 3;
 	writeln("Adding integers " ++ (1+2+3));
 	writeln("Adding variables " ++ (a+b+c));
-	writeln(1.0+2.0+3.0);
-	writeln(1.0+2.0+3.0+1.0/3.0);
+	writeln("1.0 + 2.0 + 3.0 = " ++ (1.0+2.0+3.0));
+	writeln("1.0 + 2.0 + 3.0 + 1.0 / 3.0 = " ++ (1.0+2.0+3.0+1.0/3.0));
 	newLine();
 }
 
@@ -108,7 +108,7 @@ conditional_Tests(first,second)
 	else{
 		writeln("reached correct.");
 	};
-	
+
 	newLine();
 }
 
