@@ -3,7 +3,7 @@
 	import java.util.*;
 %}
 
-%token <sval> LITERAL,NAME,OP1,OP2,OP3,OP4,OP5,OP6,OP7,AND,OR
+%token <sval> LITERAL,NAME,OP1,OP2,OP3,OP4,OP5,OP6,OP7,AND,OR,NOT
 %token VAR,IF,ELSIF,ELSE,WHILE,RETURN,OPNAME
 %type <obj> program, function, exprs, expr, binopexpr, smallexpr, commasepExpr, elseiforelse, elseifsent, elsesent, orexpr, andexpr, notexpr
 %type <ival> funcargs
@@ -19,6 +19,7 @@
 %left UNOP
 %left AND
 %left OR
+%right NOT
 
 %%
 
@@ -73,19 +74,19 @@ expr
 
 /* One or more AND expressions with OR tokens between them */
 orexpr
-  : andexpr OR orexpr { $$ = new Object[]{EXPRESSION_CALL, $2, new Object[]{$1,$3}}; }
+  : andexpr OR orexpr { $$ = new Object[]{EXPRESSION_OR, $2, new Object[]{$1,$3}}; }
   | andexpr           { $$ = $1; }
   ;
 
 /* One or more NOT expressions with AND tokens between them*/
 andexpr
-  : notexpr AND andexpr { $$ = new Object[]{EXPRESSION_CALL, $2, new Object[]{$1,$3}}; }
+  : notexpr AND andexpr { $$ = new Object[]{EXPRESSION_AND, $2, new Object[]{$1,$3}}; }
   | notexpr            { $$ = $1; }
   ;
 
 /* Binop expressions with or without a NOT prefix (!)*/
 notexpr
-  : '!' notexpr  { $$ = new Object[]{EXPRESSION_CALL, "!", new Object[]{$2} }; }
+  : NOT notexpr  { $$ = new Object[]{EXPRESSION_NOT, $2}; }
   | binopexpr    { $$ = $1; }
 
 /* Binary operations with 8 levels of priority */
@@ -239,6 +240,9 @@ public static void main( String args[] ) throws IOException
     public final static String EXPRESSION_IF = "IF";
     public final static String EXPRESSION_WHILE = "WHILE";
     public final static String EXPRESSION_BODY = "BODY";
+    public final static String EXPRESSION_NOT = "NOT";
+    public final static String EXPRESSION_AND = "AND";
+    public final static String EXPRESSION_OR = "OR";
 
     private static int nextLabel = 1;
 
@@ -295,16 +299,17 @@ public static void main( String args[] ) throws IOException
 
     public void generateExpr(Object[] expr)
     {
-           switch ((String)((Object[])expr)[0])
+           Object[] e = (Object[])expr;
+           switch ((String)e[0])
            {
               case EXPRESSION_RETURN:
                 //["RETURN",expr]
-                generateExprP((Object[])((Object[])expr)[1]);
+                generateExprP((Object[])e[1]);
                 emit("(Return)");
                 break;
               case EXPRESSION_CALL:
                 //["CALL",name,args]
-                Object[] args = (Object[])((Object[])expr)[2];
+                Object[] args = (Object[])e[2];
                 int i;
                 for(i=0; i != args.length; i++)
                 {
@@ -327,23 +332,23 @@ public static void main( String args[] ) throws IOException
                         generateExprP((Object[])args[i]);
                     }
                 }
-                emit("(Call #\""+(String)((Object[])expr)[1]+"[f"+i+"]\" "+i+")");
+                emit("(Call #\""+(String)e[1]+"[f"+i+"]\" "+i+")");
                 break;
               case EXPRESSION_FETCH:
                 //["FETCH",pos]
-                emit("(Fetch "+(int)((Object[])expr)[1]+")");
+                emit("(Fetch "+(int)e[1]+")");
                 break;
               case EXPRESSION_LITERAL:
                 //["LITERAL",string]
-                emit("(MakeVal "+(String)((Object[])expr)[1]+")");
+                emit("(MakeVal "+(String)e[1]+")");
                 break;
               case EXPRESSION_IF:
                 //["IF",expr,expr,expr]
                 //      con  then  else
                 int labElse = newLabel();
                 int labEnd = newLabel();
-                generateJump(((Object[])(((Object[])expr)[1])),0,labElse);
-                generateExpr(((Object[])(((Object[])expr)[2])));
+                generateJump(((Object[])(e[1])),0,labElse);
+                generateExpr(((Object[])(e[2])));
                 emit("(Go _"+labEnd+")");
                 emit("_"+labElse+":");
 
@@ -351,9 +356,9 @@ public static void main( String args[] ) throws IOException
                   because the way our code is generated in nanomorpho.jflex
                   there will be a case where the 3rd value will be null.
                 */
-                if(((Object[])(((Object[])expr)[3])) != null)
+                if(((Object[])(e[3])) != null)
                 {
-                    generateExpr(((Object[])(((Object[])expr)[3])));
+                    generateExpr(((Object[])(e[3])));
                 }
                 emit("_"+labEnd+":");
                 break;
@@ -362,15 +367,15 @@ public static void main( String args[] ) throws IOException
                 int labTrue = newLabel();
                 int labFalse = newLabel();
                 emit("_"+labTrue+":");
-                generateJump(((Object[])(((Object[])expr)[1])),0,labFalse);
-                generateExpr(((Object[])(((Object[])expr)[2])));
+                generateJump(((Object[])(e[1])),0,labFalse);
+                generateExpr(((Object[])(e[2])));
                 emit("(Go _"+labTrue+")");
                 emit("_"+labFalse+":");
                 break;
               case EXPRESSION_STORE:
                 //["STORE",pos,expr]
-                generateExpr((Object[])((Object[])expr)[2]);
-                emit("(Store "+(int)((Object[])expr)[1]+")");
+                generateExpr((Object[])e[2]);
+                emit("(Store "+(int)e[1]+")");
                 break;
               case EXPRESSION_BODY:
                 //["BODY",exprs]
@@ -379,26 +384,47 @@ public static void main( String args[] ) throws IOException
                     generateExpr((Object[])b_expr);
                 }
                 break;
+              case EXPRESSION_NOT:
+                  System.out.println("called me");
+                generateExpr(((Object[])(e[1])));
+                emit("(Not)");
+                break;
+              case EXPRESSION_AND:
+                int andLab = newLabel();
+                Object[] andExprs = (Object[])e[2];
+                generateExpr((Object[])andExprs[0]);
+                emit("(GoFalse _" + andLab + ")");
+                generateExpr((Object[])andExprs[1]);
+                emit("_" + andLab + ":");
+                break;
+              case EXPRESSION_OR:
+                int orLab = newLabel();
+                Object[] orExprs = (Object[])expr[2];
+                generateExpr((Object[])orExprs[0]);
+                emit("(GoTrue _" + orLab + ")");
+                generateExpr((Object[])orExprs[1]);
+                emit("_" + orLab + ":");
+                break;
               default:
-                throw new Error("Unknown intermediate code type: \""+(String)((Object[])expr)[0]+"\"");
+                throw new Error("Unknown intermediate code type: \""+(String)e[0]+"\"");
            }
     }
 
     public void generateExprP(Object[] expr)
     {
         switch ((String)((Object[])expr)[0])
-        {
+            {
             case EXPRESSION_CALL:
                 Object[] args = (Object[])((Object[])expr)[2];
                 int i;
                 for(i=0; i != args.length; i++)
-                {
-                    generateExprP((Object[])args[i]);
-                }
+                    {
+                        generateExprP((Object[])args[i]);
+                    }
                 if( i==0 )
-                {
-                    emit("(Push)");
-                }
+                    {
+                        emit("(Push)");
+                    }
                 emit("(Call #\""+(String)((Object[])expr)[1]+"[f"+i+"]\" "+i+")");
                 break;
             case EXPRESSION_FETCH:
@@ -411,26 +437,26 @@ public static void main( String args[] ) throws IOException
                 break;
             default:
                 throw new Error("Unknown intermediate code type: \""+(String)((Object[])expr)[0]+"\"");
-		}
+            }
     }
 
     public void generateJump(Object[] exr, int labelTrue, int labelFalse )
-	{
-		switch((String)exr[0])
-		{
+    {
+        switch((String)exr[0])
+            {
             case EXPRESSION_LITERAL:
-                 //["LITERAL",string]
+                //["LITERAL",string]
                 String literal = (String)exr[1];
                 if(literal.equals("false") || literal.equals("null"))
-                {
-                    if( labelFalse!=0 ) emit("(Go _"+labelFalse+")");
-                    return;
-                }
+                    {
+                        if( labelFalse!=0 ) emit("(Go _"+labelFalse+")");
+                        return;
+                    }
                 if( labelTrue!=0 ) emit("(Go _"+labelTrue+")");
                 return;
-        default:
-			generateExpr(exr);
-			if( labelTrue!=0 ) emit("(GoTrue _"+labelTrue+")");
-			if( labelFalse!=0 ) emit("(GoFalse _"+labelFalse+")");
-		}
-	}
+            default:
+                generateExpr(exr);
+                if( labelTrue!=0 ) emit("(GoTrue _"+labelTrue+")");
+                if( labelFalse!=0 ) emit("(GoFalse _"+labelFalse+")");
+            }
+    }
