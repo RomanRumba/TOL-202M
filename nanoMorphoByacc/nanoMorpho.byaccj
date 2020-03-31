@@ -67,7 +67,7 @@ exprs
 
 /* pretty basic i just translated what i wrote in jflex to this and it seem to work */
 expr
-  : RETURN expr				{ $$ = new Object[]{EXPRESSION_RETURN, $2}; }
+  : RETURN orexpr				{ $$ = new Object[]{EXPRESSION_RETURN, $2}; }
   | NAME '=' expr			{ $$ = new Object[]{EXPRESSION_STORE, findVar($1), $3}; }
   | orexpr    				{ $$ = $1; }
   ;
@@ -433,6 +433,26 @@ public static void main( String args[] ) throws IOException
             case EXPRESSION_LITERAL:
                 //["LITERAL",string]
                 emit("(MakeValP "+(String)((Object[])expr)[1]+")");
+                break;
+            case EXPRESSION_OR:
+                int orLab = newLabel();
+                Object[] orExprs = (Object[])((Object[])expr)[2];
+                generateExprP((Object[])orExprs[0]);
+                emit("(GoTrue _" + orLab + ")");
+                generateExprP((Object[])orExprs[1]);
+                emit("_" + orLab + ":");
+                break;
+            case EXPRESSION_AND:
+                int andLab = newLabel();
+                Object[] andExprs = (Object[])((Object[])expr)[2];
+                generateExprP((Object[])andExprs[0]);
+                emit("(GoTrue _" + andLab + ")");
+                generateExprP((Object[])andExprs[1]);
+                emit("_" + andLab + ":");
+                break;
+            case EXPRESSION_NOT:
+                generateExprP(((Object[])((Object[])expr[1])));
+                emit("(Not)");
                 break;
             default:
                 throw new Error("Unknown intermediate code type: \""+(String)((Object[])expr)[0]+"\"");
