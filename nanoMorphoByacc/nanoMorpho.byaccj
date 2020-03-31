@@ -19,7 +19,7 @@
 %left UNOP
 %left AND
 %left OR
-%right NOT
+%left NOT
 
 %%
 
