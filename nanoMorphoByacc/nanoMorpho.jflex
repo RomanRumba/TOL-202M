@@ -35,6 +35,7 @@ _CHAR=\'([^\'\\]|\\b|\\t|\\n|\\f|\\r|\\\"|\\\'|\\\\|(\\[0-3][0-7][0-7])|(\\[0-7]
 _DELIM=[(){},;=]
 _AND=&&
 _OR=\|\|
+_NOT=\!
 _NAME=([:letter:]|\_|{_DIGIT})+
 _OPNAME=[\+\-*/!%&=><\:\^\~&|?]+
 
@@ -53,6 +54,11 @@ _OPNAME=[\+\-*/!%&=><\:\^\~&|?]+
 {_OR} {
     yyparser.yylval = new NanoMorphoParserVal(yytext());
     return NanoMorphoParser.OR;
+}
+
+{_NOT} {
+    yyparser.yylval = new NanoMorphoParserVal(yytext());
+    return NanoMorphoParser.NOT;
 }
 
 {_STRING} | {_FLOAT} | {_CHAR} | {_INT} | null | true | false {
